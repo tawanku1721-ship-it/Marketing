@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Performance Dashboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun',Arial,sans-serif;background:#F4F6FA;color:#1a1a2e;min-height:100vh}
+  .header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .logo{font-size:18px;font-weight:700;color:#185FA5;letter-spacing:-.3px}
+  .logo span{color:#0F6E56}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block}
+  .status-dot.live{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+  .status-dot.error{background:#ef4444}
+  .status-label{font-size:11px;color:#888}
+  .refresh-btn{padding:5px 10px;border:1px solid #dde3ed;border-radius:8px;font-size:12px;color:#555;background:#fff;cursor:pointer}
+  .refresh-btn:hover{background:#f8faff;border-color:#185FA5;color:#185FA5}
+  .person-tabs{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 32px;display:flex;gap:0;overflow-x:auto}
+  .person-tab{padding:14px 20px;font-size:14px;font-weight:500;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
+  .person-tab:hover{color:#185FA5;background:#f8faff}
+  .person-tab.active{color:#185FA5;border-bottom-color:#185FA5;background:#f8faff}
+  .main{padding:24px 32px;max-width:1200px;margin:0 auto}
+  .section-head{font-size:13px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+  .brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+  .brand-card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e9eef5}
+  .brand-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .brand-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.05em}
+  .badge-aukey{background:#dbeafe;color:#1e40af}
+  .badge-earfun{background:#ede9fe;color:#4c1d95}
+  .badge-mokin{background:#d1fae5;color:#065f46}
+  .brand-nums{text-align:right}
+  .brand-actual{font-size:20px;font-weight:700}
+  .brand-target{font-size:11px;color:#aaa}
+  .big-bar-bg{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-bottom:12px}
+  .big-bar{height:100%;border-radius:4px;transition:width .5s}
+  .plat-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .plat-label{font-size:11px;font-weight:600;width:52px;flex-shrink:0}
+  .plat-bar-bg{flex:1;height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden}
+  .plat-bar{height:100%;border-radius:3px}
+  .plat-count{font-size:11px;color:#888;min-width:36px;text-align:right}
+  .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
+  .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+  .f-btn{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s}
+  .f-btn:hover{border-color:#185FA5;color:#185FA5}
+  .f-btn.active{background:#185FA5;border-color:#185FA5;color:#fff}
+  .table-wrap{background:#fff;border-radius:12px;border:1px solid #e9eef5;overflow:auto;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:#f8faff;padding:10px 14px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#666;border-bottom:1px solid #e9eef5;white-space:nowrap}
+  tbody td{padding:10px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#f8faff}
+  .brand-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;display:inline-block}
+  .plat-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;display:inline-block}
+  .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
+  .status-done{color:#059669;font-weight:700}.status-pending{color:#d97706;font-size:12px;font-weight:500}
+  .num-job{text-align:center;font-weight:600;font-size:14px}
+  .summary-bar{background:#fff;border-radius:12px;border:1px solid #e9eef5;padding:16px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .overall-bar-bg{flex:1;min-width:120px;height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+  .overall-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#185FA5,#0d9488);transition:width .6s}
+  .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px}
+  .spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;z-index:9999}
+  .toast.show{opacity:1}
+  .no-data{text-align:center;padding:40px;color:#aaa;font-size:14px}
+  .metric-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Team <span>Performance</span></div>
+  <div style="font-size:13px;color:#444;margin-left:8px">Dashboard</div>
+  <div class="header-right">
+    <span class="status-dot" id="statusDot"></span>
+    <span class="status-label" id="statusLabel">กำลังโหลด...</span>
+    <button class="refresh-btn" onclick="fetchData()" title="รีเฟรชข้อมูล">↻ รีเฟรช</button>
+  </div>
+</div>
+
+<div class="person-tabs" id="personTabs"></div>
+
+<div class="main">
+  <div class="summary-bar" id="summaryBar"></div>
+  <div class="section-head">ภาพรวมรายแบรนด์</div>
+  <div class="brand-grid" id="brandGrid"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div class="section-head" style="margin:0">รายการงานทั้งหมด</div>
+    <div class="filter-row" id="filterRow">
+      <button class="f-btn active" onclick="filterPlat(this,'ALL')">ทั้งหมด</button>
+      <button class="f-btn" onclick="filterPlat(this,'SHOPEE')">Shopee</button>
+      <button class="f-btn" onclick="filterPlat(this,'LAZADA')">Lazada</button>
+      <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>แบรนด์</th><th>Platform</th><th>Job Responsibilities</th>
+        <th style="text-align:center">จำนวนงาน</th><th>Deadline</th><th>Actual Completion</th><th>Status</th>
+      </tr></thead>
+      <tbody id="jobBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:#555">กำลังดึงข้อมูลจาก Google Sheet...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_ID = '1gMWQ4EIyDX04dA6TwFwvvwqFN3gSD4hsh_oEVDjWjx8';
+const SHEET_GID = '982780150';
+
+const BRANDS = ['AUKEY','EARFUN','MOKIN'];
+const BRAND_TARGET = {AUKEY:31, EARFUN:17, MOKIN:4};
+const BRAND_COLOR = {AUKEY:'#1d4ed8', EARFUN:'#7c3aed', MOKIN:'#059669'};
+const BRAND_BADGE = {AUKEY:'badge-aukey', EARFUN:'badge-earfun', MOKIN:'badge-mokin'};
+const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar'};
+const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok'};
+const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color'};
+
+const COL_SETS = [
+  {brandCol:0, platCol:1, jobCol:2, dlCol:3, actCol:4, numCol:5, statusCol:6},
+  {brandCol:8, platCol:9, jobCol:10, dlCol:11, actCol:12, numCol:13, statusCol:14},
+  {brandCol:16, platCol:17, jobCol:18, dlCol:19, actCol:20, numCol:21, statusCol:22},
+];
+
+let liveData = null;
+let currentPerson = 0;
+let currentPlat = 'ALL';
+let autoRefreshTimer = null;
+let sheetNames = [];
+
+function serialToDate(v) {
+  if (!v) return null;
+  if (typeof v === 'string' && v.match(/^\d{4}-\d{2}-\d{2}$/)) return v;
+  if (typeof v === 'number') {
+    const d = new Date(Date.UTC(1899,11,30) + v * 86400000);
+    return d.toISOString().slice(0,10);
+  }
+  return String(v);
+}
+
+function fmtDate(v) {
+  if (!v || v === '-') return '-';
+  const s = serialToDate(v);
+  if (!s) return '-';
+  const [y,m,d] = s.split('-');
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)-1957}`;
+}
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'err' ? '#dc2626' : '#1e293b';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function isDone(status) { return status === '✔' || status === 'done' || status === 'TRUE' || status === true; }
+
+// ดึงข้อมูลผ่าน Google Sheets CSV export (ไม่ต้องใช้ API key)
+async function fetchSheet(gid) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const row = [];
+    let inQ = false, cell = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
+      else { cell += c; }
+    }
+    row.push(cell.trim());
+    rows.push(row);
+  }
+  return rows;
+}
+
+// ดึงรายชื่อ sheet ทั้งหมดผ่าน HTML
+async function fetchSheetNames() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+    const res = await fetch(url);
+    const html = await res.text();
+    const matches = [...html.matchAll(/"name":"([^"]+)","index":\d+,"sheetId":(\d+)/g)];
+    if (matches.length > 0) {
+      return matches.map(m => ({ name: m[1], gid: m[2] }));
+    }
+  } catch(e) {}
+  return [{ name: 'Sheet1', gid: SHEET_GID }];
+}
+
+async function fetchData() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusLabel').textContent = 'กำลังเชื่อมต่อ...';
+
+  try {
+    const rows = await fetchSheet(SHEET_GID);
+    const result = {};
+
+    // หาชื่อคนจากแถวที่ 1 (row index 0) หรือ header
+    // ดึงชื่อคนจาก column ที่กำหนด (ปรับตามโครงสร้าง sheet จริง)
+    // สมมติแถว 1-5 เป็น header, แถว 6+ เป็นข้อมูล
+    // หาชื่อคนจาก row 0 (หัว sheet)
+    const peopleRow = rows[0] || [];
+    const people = [];
+    // ดึงชื่อคนจาก col 0, 8, 16 ของแถวแรก หรือใช้ชื่อ sheet
+    [0, 8, 16].forEach(col => {
+      const name = (peopleRow[col] || '').trim();
+      if (name && !people.includes(name)) people.push(name);
+    });
+
+    // ถ้าไม่มีชื่อในแถวแรก ลองแถว 3-5
+    if (people.length === 0) {
+      for (let r = 0; r < Math.min(6, rows.length); r++) {
+        COL_SETS.forEach(c => {
+          const name = (rows[r][c.brandCol] || '').trim();
+          if (name && name.length < 30 && !BRANDS.includes(name.toUpperCase())) {
+            if (!people.includes(name)) people.push(name);
+          }
+        });
+      }
+    }
+
+    // ถ้ายังไม่มี ใช้ชื่อ default
+    const finalPeople = people.length > 0 ? people : ['ทีม Marketing'];
+
+    // สร้าง jobs จากแถวที่ 6 เป็นต้นไป (index 6)
+    finalPeople.forEach(p => { result[p] = { jobs: [] }; });
+
+    for (let r = 6; r < rows.length; r++) {
+      const row = rows[r];
+      COL_SETS.forEach((c, ci) => {
+        const brand = String(row[c.brandCol] || '').trim();
+        const job = String(row[c.jobCol] || '').trim();
+        if (!brand || !job) return;
+        const personName = finalPeople[ci] || finalPeople[0];
+        if (!result[personName]) result[personName] = { jobs: [] };
+        result[personName].jobs.push({
+          brand: brand,
+          platform: String(row[c.platCol] || '').trim().toUpperCase(),
+          job: job,
+          deadline: serialToDate(row[c.dlCol]),
+          actual: serialToDate(row[c.actCol]),
+          numJob: Number(row[c.numCol] || 0),
+          status: String(row[c.statusCol] || '').trim(),
+        });
+      });
+    }
+
+    liveData = result;
+    document.getElementById('statusDot').className = 'status-dot live';
+    document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
+    toast('ดึงข้อมูลสำเร็จ ✓');
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(fetchData, 60000);
+  } catch(e) {
+    document.getElementById('statusDot').className = 'status-dot error';
+    document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
+    toast('เชื่อมต่อไม่ได้: ' + e.message, 'err');
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    renderAll();
+  }
+}
+
+function getPeople() {
+  if (liveData) return Object.keys(liveData);
+  return ['ไม่มีข้อมูล'];
+}
+
+function getJobs(personName) {
+  if (liveData && liveData[personName]) return liveData[personName].jobs;
+  return [];
+}
+
+function renderTabs() {
+  const people = getPeople();
+  document.getElementById('personTabs').innerHTML = people.map((p,i) =>
+    `<div class="person-tab ${i===currentPerson?'active':''}" onclick="switchPerson(${i})">${p}</div>`
+  ).join('');
+}
+
+function switchPerson(i) {
+  currentPerson = i; currentPlat = 'ALL';
+  document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
+  renderAll();
+}
+
+function filterPlat(el, plat) {
+  currentPlat = plat;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function renderSummary() {
+  const name = getPeople()[currentPerson];
+  const jobs = getJobs(name);
+  const totalActual = jobs.reduce((s,j) => s+(j.numJob||0), 0);
+  const totalTarget = Object.values(BRAND_TARGET).reduce((a,b) => a+b, 0);
+  const done = jobs.filter(j => isDone(j.status)).length;
+  const pct = totalTarget > 0 ? Math.round(totalActual/totalTarget*100) : 0;
+  document.getElementById('summaryBar').innerHTML = `
+    <div><div style="font-size:11px;color:#888;margin-bottom:2px">ชื่อ <span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">● LIVE</span></div>
+    <div style="font-size:17px;font-weight:700">${name}</div></div>
+    <div style="width:1px;height:50px;background:#e9eef5"></div>
+    <div><div class="metric-label">Actual รวม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
+    <div><div class="metric-label">เป้าหมายรวม</div><div style="font-size:28px;font-weight:700;color:#444">${totalTarget}</div></div>
+    <div><div class="metric-label">เสร็จแล้ว</div><div style="font-size:28px;font-weight:700;color:#059669">${done}</div></div>
+    <div><div class="metric-label">ยังไม่เสร็จ</div><div style="font-size:28px;font-weight:700;color:#d97706">${jobs.length-done}</div></div>
+    <div style="flex:1;min-width:140px">
+      <div class="metric-label" style="margin-bottom:6px">Overall Progress — ${pct}%</div>
+      <div class="overall-bar-bg"><div class="overall-bar" style="width:${Math.min(pct,100)}%"></div></div>
+    </div>`;
+}
+
+function renderBrandGrid() {
+  const name = getPeople()[currentPerson];
+  const jobs = getJobs(name);
+  document.getElementById('brandGrid').innerHTML = BRANDS.map(b => {
+    const bj = jobs.filter(j => j.brand === b);
+    const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
+    const target = BRAND_TARGET[b];
+    const pct = target > 0 ? Math.round(actual/target*100) : 0;
+    const platRows = ['SHOPEE','LAZADA','TIKTOK'].map(plat => {
+      const pj = bj.filter(j => j.platform === plat);
+      const done = pj.filter(j => isDone(j.status)).length;
+      const total = pj.length;
+      const pp = total > 0 ? Math.round(done/total*100) : 0;
+      return `<div class="plat-row">
+        <span class="plat-label ${PLAT_COLOR_CLASS[plat]}" style="font-size:10px">${plat}</span>
+        <div class="plat-bar-bg"><div class="plat-bar ${PLAT_BAR[plat]}" style="width:${pp}%"></div></div>
+        <span class="plat-count">${done}/${total}</span></div>`;
+    }).join('');
+    return `<div class="brand-card">
+      <div class="brand-header">
+        <span class="brand-badge ${BRAND_BADGE[b]}">${b}</span>
+        <div class="brand-nums"><div class="brand-actual" style="color:${BRAND_COLOR[b]}">${actual}</div>
+        <div class="brand-target">เป้า ${target} &nbsp; ${pct}%</div></div>
+      </div>
+      <div class="big-bar-bg"><div class="big-bar" style="width:${Math.min(pct,100)}%;background:${BRAND_COLOR[b]}"></div></div>
+      ${platRows}</div>`;
+  }).join('');
+}
+
+function renderTable() {
+  const name = getPeople()[currentPerson];
+  let jobs = getJobs(name);
+  if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platform === currentPlat);
+  if (!jobs.length) {
+    document.getElementById('jobBody').innerHTML = `<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
+    return;
+  }
+  document.getElementById('jobBody').innerHTML = jobs.map((j,i) => {
+    const done = isDone(j.status);
+    const dlStr = fmtDate(j.deadline);
+    const actStr = fmtDate(j.actual);
+    let actColor = '#555';
+    if (j.actual && j.deadline) {
+      actColor = j.actual <= j.deadline ? '#059669' : '#d97706';
+    }
+    return `<tr>
+      <td style="color:#aaa;font-size:12px">${i+1}</td>
+      <td><span class="brand-pill ${BRAND_BADGE[j.brand]||''}">${j.brand}</span></td>
+      <td><span class="plat-pill ${PLAT_PILL[j.platform]||''}">${j.platform}</span></td>
+      <td>${j.job}</td>
+      <td class="num-job">${j.numJob}</td>
+      <td style="font-size:12px;color:#555;white-space:nowrap">${dlStr}</td>
+      <td style="font-size:12px;white-space:nowrap;color:${actColor}">${actStr}</td>
+      <td class="${done?'status-done':'status-pending'}">${done?'✔ เสร็จแล้ว':'⏳ ยังไม่เริ่ม'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll() {
+  renderTabs();
+  renderSummary();
+  renderBrandGrid();
+  renderTable();
+}
+
+fetchData();
+</script>
+</body>
+</html>
