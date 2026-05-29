@@ -280,9 +280,13 @@ async function fetchData() {
     for (const sheet of SHEETS) {
       const rows = await fetchSheet(sheet.gid);
       const jobs = [];
+      const monthlyTargets = {}; // เก็บเป้าหมายรายเดือน
 
       for (let mi = 0; mi < MONTHS.length; mi++) {
         const colSets = getColSets(mi);
+        const targetCol = mi * 27 + 1; // คอลัมน์ B, AC, ... (col index 1, 28, 55...)
+        const targetVal = Number((rows[5] || [])[targetCol] || 0);
+        monthlyTargets[MONTHS[mi]] = targetVal;
 
         for (let r = 9; r < rows.length; r++) {
           const row = rows[r];
@@ -310,7 +314,7 @@ async function fetchData() {
         }
       }
 
-      result[sheet.name] = { jobs };
+      result[sheet.name] = { jobs, monthlyTargets };
     }
 
     liveData = result;
@@ -327,6 +331,11 @@ async function fetchData() {
     document.getElementById('loadingOverlay').style.display = 'none';
     renderAll();
   }
+}
+
+function getMonthlyTargets(personName) {
+  if (liveData && liveData[personName]) return liveData[personName].monthlyTargets || {};
+  return {};
 }
 
 function getPeople() {
@@ -374,6 +383,7 @@ function filterBrand(el, brand) {
   currentBrand = brand;
   document.querySelectorAll('.f-btn-brand').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  renderSummary();
   renderTable();
 }
 
@@ -389,16 +399,27 @@ function filterPlat(el, plat) {
   currentPlat = plat;
   document.querySelectorAll('#filterRow .f-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  renderSummary();
   renderTable();
 }
 
 function renderSummary() {
   const name = getPeople()[currentPerson];
   let jobs = getJobs(name);
+  const monthlyTargets = getMonthlyTargets(name);
   if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
+  if (currentBrand !== 'ALL') jobs = jobs.filter(j => j.brand === currentBrand);
+  if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platforms && j.platforms.includes(currentPlat));
 
   const totalActual = jobs.reduce((s,j) => s+(j.numJob||0), 0);
-  const totalTarget = Object.values(BRAND_TARGET).reduce((a,b) => a+b, 0);
+
+  // เป้าหมายรายเดือนจาก Sheet จริง
+  let totalTarget;
+  if (currentMonth !== 'ALL') {
+    totalTarget = monthlyTargets[currentMonth] || BRAND_TARGET[currentBrand] || Object.values(BRAND_TARGET).reduce((a,b)=>a+b,0);
+  } else {
+    totalTarget = Object.values(monthlyTargets).reduce((a,b)=>a+b,0) || Object.values(BRAND_TARGET).reduce((a,b)=>a+b,0);
+  }
   const done = jobs.filter(j => isDone(j.status)).length;
   const pct = totalTarget > 0 ? Math.round(totalActual/totalTarget*100) : 0;
   const monthLabel = currentMonth === 'ALL' ? 'ทุกเดือน' : currentMonth;
