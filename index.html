@@ -146,13 +146,21 @@ let autoRefreshTimer = null;
 let sheetNames = [];
 
 function serialToDate(v) {
-  if (!v) return null;
-  if (typeof v === 'string' && v.match(/^\d{4}-\d{2}-\d{2}$/)) return v;
-  if (typeof v === 'number') {
-    const d = new Date(Date.UTC(1899,11,30) + v * 86400000);
+  if (!v || v === '') return null;
+  const s = String(v).trim();
+  // d/m/yyyy หรือ dd/mm/yyyy
+  if (s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    const [d, m, y] = s.split('/');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  // yyyy-mm-dd
+  if (s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
+  // Excel serial number
+  if (!isNaN(s) && Number(s) > 0) {
+    const d = new Date(Date.UTC(1899,11,30) + Number(s) * 86400000);
     return d.toISOString().slice(0,10);
   }
-  return String(v);
+  return null;
 }
 
 function fmtDate(v) {
