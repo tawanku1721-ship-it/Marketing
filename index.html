@@ -87,13 +87,19 @@
   <div class="summary-bar" id="summaryBar"></div>
   <div class="section-head">ภาพรวมรายแบรนด์</div>
   <div class="brand-grid" id="brandGrid"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
     <div class="section-head" style="margin:0">รายการงานทั้งหมด</div>
-    <div class="filter-row" id="filterRow">
-      <button class="f-btn active" onclick="filterPlat(this,'ALL')">ทั้งหมด</button>
-      <button class="f-btn" onclick="filterPlat(this,'SHOPEE')">Shopee</button>
-      <button class="f-btn" onclick="filterPlat(this,'LAZADA')">Lazada</button>
-      <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div id="monthFilterRow" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="f-btn active" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>
+      </div>
+      <div style="width:1px;height:20px;background:#e2e8f0"></div>
+      <div class="filter-row" id="filterRow">
+        <button class="f-btn active" onclick="filterPlat(this,'ALL')">ทั้งหมด</button>
+        <button class="f-btn" onclick="filterPlat(this,'SHOPEE')">Shopee</button>
+        <button class="f-btn" onclick="filterPlat(this,'LAZADA')">Lazada</button>
+        <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
+      </div>
     </div>
   </div>
   <div class="table-wrap">
@@ -133,11 +139,20 @@ const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar'}
 const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok'};
 const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color'};
 
-const COL_SETS = [
-  {brandCol:0, platCol:1, jobCol:2, dlCol:3, actCol:4, numCol:5, statusCol:6},
-  {brandCol:8, platCol:9, jobCol:10, dlCol:11, actCol:12, numCol:13, statusCol:14},
-  {brandCol:16, platCol:17, jobCol:18, dlCol:19, actCol:20, numCol:21, statusCol:22},
-];
+const MONTHS = ['April','May','June','July','August','September','October','November','December'];
+
+// แต่ละเดือนมี 3 ชุด (AUKEY, EARFUN, MOKIN) ห่างกัน 8 คอลัมน์
+// April: A(0)-G(6), I(8)-O(14), Q(16)-W(22)
+// May:   Y(24)-AE(30), AG(32)-AM(38), AO(40)-AU(46)
+// แต่ละเดือนเริ่มที่ offset = 24 * monthIndex (April=0, May=1, ...)
+function getColSets(monthIndex) {
+  const base = monthIndex * 24;
+  return [
+    { brandCol: base+0,  platCol: base+1,  jobCol: base+2,  dlCol: base+3,  actCol: base+4,  numCol: base+5,  statusCol: base+6  },
+    { brandCol: base+8,  platCol: base+9,  jobCol: base+10, dlCol: base+11, actCol: base+12, numCol: base+13, statusCol: base+14 },
+    { brandCol: base+16, platCol: base+17, jobCol: base+18, dlCol: base+19, actCol: base+20, numCol: base+21, statusCol: base+22 },
+  ];
+}
 
 let liveData = null;
 let currentPerson = 0;
@@ -248,22 +263,31 @@ async function fetchData() {
       const rows = await fetchSheet(sheet.gid);
       const jobs = [];
 
-      for (let r = 6; r < rows.length; r++) {
-        const row = rows[r];
-        COL_SETS.forEach(c => {
-          const brand = String(row[c.brandCol] || '').trim();
-          const job = String(row[c.jobCol] || '').trim();
-          if (!brand || !job) return;
-          jobs.push({
-            brand: brand,
-            platform: String(row[c.platCol] || '').trim().toUpperCase(),
-            job: job,
-            deadline: serialToDate(row[c.dlCol]),
-            actual: serialToDate(row[c.actCol]),
-            numJob: Number(row[c.numCol] || 0),
-            status: String(row[c.statusCol] || '').trim(),
+      for (let mi = 0; mi < MONTHS.length; mi++) {
+        const colSets = getColSets(mi);
+
+        for (let r = 7; r < rows.length; r++) {
+          const row = rows[r];
+          colSets.forEach(c => {
+            const brand = String(row[c.brandCol] || '').trim();
+            const job = String(row[c.jobCol] || '').trim();
+
+            // ข้ามแถว header (Brand, Platform, Job Responsibilities)
+            if (!brand || !job) return;
+            if (brand.toLowerCase() === 'brand' || job.toLowerCase() === 'job responsibilities') return;
+
+            jobs.push({
+              month: MONTHS[mi],
+              brand: brand,
+              platform: String(row[c.platCol] || '').trim().toUpperCase(),
+              job: job,
+              deadline: serialToDate(row[c.dlCol]),
+              actual: serialToDate(row[c.actCol]),
+              numJob: Number(row[c.numCol] || 0),
+              status: String(row[c.statusCol] || '').trim(),
+            });
           });
-        });
+        }
       }
 
       result[sheet.name] = { jobs };
@@ -300,12 +324,35 @@ function renderTabs() {
   document.getElementById('personTabs').innerHTML = people.map((p,i) =>
     `<div class="person-tab ${i===currentPerson?'active':''}" onclick="switchPerson(${i})">${p}</div>`
   ).join('');
+
+  // สร้างปุ่ม filter เดือนจากข้อมูลจริง
+  const name = people[currentPerson];
+  const jobs = getJobs(name);
+  const months = [...new Set(jobs.map(j => j.month).filter(Boolean))];
+  const monthOrder = ['April','May','June','July','August','September','October','November','December'];
+  months.sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+
+  const monthBtns = [`<button class="f-btn ${currentMonth==='ALL'?'active':''}" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>`];
+  months.forEach(m => {
+    monthBtns.push(`<button class="f-btn ${currentMonth===m?'active':''}" onclick="filterMonth(this,'${m}')">${m}</button>`);
+  });
+  document.getElementById('monthFilterRow').innerHTML = monthBtns.join('');
 }
 
 function switchPerson(i) {
-  currentPerson = i; currentPlat = 'ALL';
+  currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL';
   document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
   renderAll();
+}
+
+let currentMonth = 'ALL';
+
+function filterMonth(el, month) {
+  currentMonth = month;
+  document.querySelectorAll('#monthFilterRow .f-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+  renderBrandGrid();
 }
 
 function filterPlat(el, plat) {
@@ -338,7 +385,9 @@ function renderSummary() {
 
 function renderBrandGrid() {
   const name = getPeople()[currentPerson];
-  const jobs = getJobs(name);
+  let jobs = getJobs(name);
+  if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
+
   document.getElementById('brandGrid').innerHTML = BRANDS.map(b => {
     const bj = jobs.filter(j => j.brand === b);
     const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
@@ -368,6 +417,7 @@ function renderBrandGrid() {
 function renderTable() {
   const name = getPeople()[currentPerson];
   let jobs = getJobs(name);
+  if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
   if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platform === currentPlat);
   if (!jobs.length) {
     document.getElementById('jobBody').innerHTML = `<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
