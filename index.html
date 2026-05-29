@@ -41,7 +41,11 @@
   .plat-bar{height:100%;border-radius:3px}
   .plat-count{font-size:11px;color:#888;min-width:36px;text-align:right}
   .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
+  .facebook-color{color:#1877f2}.instagram-color{color:#e1306c}.offline-color{color:#64748b}.mainjob-color{color:#0f172a}
   .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
+  .facebook-bar{background:#1877f2}.instagram-bar{background:#e1306c}.offline-bar{background:#64748b}.mainjob-bar{background:#0f172a}
+  .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
+  .pill-facebook{background:#eff6ff;color:#1d4ed8}.pill-instagram{background:#fdf2f8;color:#9d174d}.pill-offline{background:#f1f5f9;color:#475569}.pill-mainjob{background:#f8fafc;color:#0f172a}
   .filter-row{display:flex;gap:8px;flex-wrap:wrap}
   .f-btn-brand{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
   .f-btn-brand:hover{border-color:#185FA5;color:#185FA5}
@@ -108,6 +112,10 @@
         <button class="f-btn" onclick="filterPlat(this,'SHOPEE')">Shopee</button>
         <button class="f-btn" onclick="filterPlat(this,'LAZADA')">Lazada</button>
         <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
+        <button class="f-btn" onclick="filterPlat(this,'FACEBOOK')">Facebook</button>
+        <button class="f-btn" onclick="filterPlat(this,'INSTAGRAM')">Instagram</button>
+        <button class="f-btn" onclick="filterPlat(this,'OFFLINE')">Offline</button>
+        <button class="f-btn" onclick="filterPlat(this,'MAINJOB')">Main Job</button>
       </div>
     </div>
   </div>
@@ -115,7 +123,7 @@
     <table>
       <thead><tr>
         <th>#</th><th>แบรนด์</th><th>Platform</th><th>Job Responsibilities</th>
-        <th style="text-align:center">จำนวนงาน</th><th>Deadline</th><th>Actual Completion</th><th>Status</th>
+        <th style="text-align:center">จำนวนงาน</th><th>Deadline</th><th>Actual Completion</th><th>Link</th><th>Status</th>
       </tr></thead>
       <tbody id="jobBody"></tbody>
     </table>
@@ -144,22 +152,20 @@ const BRANDS = ['AUKEY','EARFUN','MOKIN'];
 const BRAND_TARGET = {AUKEY:31, EARFUN:17, MOKIN:4};
 const BRAND_COLOR = {AUKEY:'#1d4ed8', EARFUN:'#7c3aed', MOKIN:'#059669'};
 const BRAND_BADGE = {AUKEY:'badge-aukey', EARFUN:'badge-earfun', MOKIN:'badge-mokin'};
-const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar'};
-const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok'};
-const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color'};
+const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar', FACEBOOK:'facebook-bar', INSTAGRAM:'instagram-bar', OFFLINE:'offline-bar', MAINJOB:'mainjob-bar'};
+const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob'};
+const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color'};
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
 
-// แต่ละเดือนมี 3 ชุด (AUKEY, EARFUN, MOKIN) ห่างกัน 8 คอลัมน์
-// April: A(0)-G(6), I(8)-O(14), Q(16)-W(22)
-// May:   Y(24)-AE(30), AG(32)-AM(38), AO(40)-AU(46)
-// แต่ละเดือนเริ่มที่ offset = 24 * monthIndex (April=0, May=1, ...)
+// โครงสร้างใหม่: A=Brand, B=Platform, C=Job, D=Deadline, E=Actual, F=NumJob, G=Link, H=Status
+// แต่ละชุดห่างกัน 10 คอลัมน์ (9 + 1 ว่าง)
 function getColSets(monthIndex) {
-  const base = monthIndex * 24;
+  const base = monthIndex * 30; // แต่ละเดือนมี 3 ชุด x 10 = 30 คอลัมน์
   return [
-    { brandCol: base+0,  platCol: base+1,  jobCol: base+2,  dlCol: base+3,  actCol: base+4,  numCol: base+5,  statusCol: base+6  },
-    { brandCol: base+8,  platCol: base+9,  jobCol: base+10, dlCol: base+11, actCol: base+12, numCol: base+13, statusCol: base+14 },
-    { brandCol: base+16, platCol: base+17, jobCol: base+18, dlCol: base+19, actCol: base+20, numCol: base+21, statusCol: base+22 },
+    { brandCol:base+0,  platCol:base+1,  jobCol:base+2,  dlCol:base+3,  actCol:base+4,  numCol:base+5,  linkCol:base+6,  statusCol:base+7  },
+    { brandCol:base+10, platCol:base+11, jobCol:base+12, dlCol:base+13, actCol:base+14, numCol:base+15, linkCol:base+16, statusCol:base+17 },
+    { brandCol:base+20, platCol:base+21, jobCol:base+22, dlCol:base+23, actCol:base+24, numCol:base+25, linkCol:base+26, statusCol:base+27 },
   ];
 }
 
@@ -288,11 +294,12 @@ async function fetchData() {
             jobs.push({
               month: MONTHS[mi],
               brand: brand,
-              platform: String(row[c.platCol] || '').trim().toUpperCase(),
+              platforms: String(row[c.platCol] || '').trim().toUpperCase().split(/[\s,\/]+/).filter(Boolean),
               job: job,
               deadline: serialToDate(row[c.dlCol]),
               actual: serialToDate(row[c.actCol]),
               numJob: Number(row[c.numCol] || 0),
+              link: String(row[c.linkCol] || '').trim(),
               status: String(row[c.statusCol] || '').trim(),
             });
           });
@@ -376,7 +383,7 @@ function filterMonth(el, month) {
 
 function filterPlat(el, plat) {
   currentPlat = plat;
-  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filterRow .f-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   renderTable();
 }
@@ -418,14 +425,15 @@ function renderBrandGrid() {
     const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
     const target = BRAND_TARGET[b];
     const pct = target > 0 ? Math.round(actual/target*100) : 0;
-    const platRows = ['SHOPEE','LAZADA','TIKTOK'].map(plat => {
-      const pj = bj.filter(j => j.platform === plat);
+    const platRows = ['SHOPEE','LAZADA','TIKTOK','FACEBOOK','INSTAGRAM','OFFLINE','MAINJOB'].map(plat => {
+      const pj = bj.filter(j => j.platforms && j.platforms.includes(plat));
+      if (pj.length === 0) return '';
       const done = pj.filter(j => isDone(j.status)).length;
       const total = pj.length;
       const pp = total > 0 ? Math.round(done/total*100) : 0;
       return `<div class="plat-row">
-        <span class="plat-label ${PLAT_COLOR_CLASS[plat]}" style="font-size:10px">${plat}</span>
-        <div class="plat-bar-bg"><div class="plat-bar ${PLAT_BAR[plat]}" style="width:${pp}%"></div></div>
+        <span class="plat-label ${PLAT_COLOR_CLASS[plat]||''}" style="font-size:10px">${plat}</span>
+        <div class="plat-bar-bg"><div class="plat-bar ${PLAT_BAR[plat]||''}" style="width:${pp}%"></div></div>
         <span class="plat-count">${done}/${total}</span></div>`;
     }).join('');
     return `<div class="brand-card">
@@ -444,9 +452,9 @@ function renderTable() {
   let jobs = getJobs(name);
   if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
   if (currentBrand !== 'ALL') jobs = jobs.filter(j => j.brand === currentBrand);
-  if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platform === currentPlat);
+  if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platforms && j.platforms.includes(currentPlat));
   if (!jobs.length) {
-    document.getElementById('jobBody').innerHTML = `<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
+    document.getElementById('jobBody').innerHTML = `<tr><td colspan="9" class="no-data">ไม่พบรายการ</td></tr>`;
     return;
   }
   document.getElementById('jobBody').innerHTML = jobs.map((j,i) => {
@@ -457,14 +465,19 @@ function renderTable() {
     if (j.actual && j.deadline) {
       actColor = j.actual <= j.deadline ? '#059669' : '#d97706';
     }
+    const platPills = (j.platforms || []).map(p =>
+      `<span class="plat-pill ${PLAT_PILL[p]||'pill-offline'}" style="margin-right:3px">${p}</span>`
+    ).join('');
+    const linkBtn = j.link ? `<a href="${j.link}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;background:#f0f7ff;color:#185FA5;font-size:11px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe">🔗 ดูงาน</a>` : '<span style="color:#ccc;font-size:11px">-</span>';
     return `<tr>
       <td style="color:#aaa;font-size:12px">${i+1}</td>
       <td><span class="brand-pill ${BRAND_BADGE[j.brand]||''}">${j.brand}</span></td>
-      <td><span class="plat-pill ${PLAT_PILL[j.platform]||''}">${j.platform}</span></td>
+      <td>${platPills}</td>
       <td>${j.job}</td>
       <td class="num-job">${j.numJob}</td>
       <td style="font-size:12px;color:#555;white-space:nowrap">${dlStr}</td>
       <td style="font-size:12px;white-space:nowrap;color:${actColor}">${actStr}</td>
+      <td>${linkBtn}</td>
       <td class="${done?'status-done':'status-pending'}">${done?'✔ เสร็จแล้ว':'⏳ ยังไม่เริ่ม'}</td>
     </tr>`;
   }).join('');
