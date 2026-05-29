@@ -11,11 +11,6 @@
   .logo{font-size:18px;font-weight:700;color:#185FA5;letter-spacing:-.3px}
   .logo span{color:#0F6E56}
   .header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-  .url-input-wrap{display:flex;align-items:center;gap:8px}
-  .url-input{padding:6px 10px;border:1px solid #dde3ed;border-radius:8px;font-size:12px;width:340px;color:#333}
-  .url-input:focus{outline:none;border-color:#185FA5}
-  .connect-btn{padding:6px 14px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
-  .connect-btn:hover{background:#0d4a8a}
   .status-dot{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block}
   .status-dot.live{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
   .status-dot.error{background:#ef4444}
@@ -27,11 +22,6 @@
   .person-tab:hover{color:#185FA5;background:#f8faff}
   .person-tab.active{color:#185FA5;border-bottom-color:#185FA5;background:#f8faff}
   .main{padding:24px 32px;max-width:1200px;margin:0 auto}
-  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
-  .metric-card{background:#fff;border-radius:10px;padding:16px;border:1px solid #e9eef5}
-  .metric-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-  .metric-val{font-size:24px;font-weight:700;line-height:1.1}
-  .metric-sub{font-size:11px;color:#aaa;margin-top:2px}
   .section-head{font-size:13px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
   .brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
   .brand-card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e9eef5}
@@ -75,9 +65,8 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;z-index:9999}
   .toast.show{opacity:1}
-  .setup-banner{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#92400e;line-height:1.6}
-  .setup-banner strong{font-weight:700}
   .no-data{text-align:center;padding:40px;color:#aaa;font-size:14px}
+  .metric-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -86,12 +75,8 @@
   <div class="logo">Team <span>Performance</span></div>
   <div style="font-size:13px;color:#444;margin-left:8px">Dashboard</div>
   <div class="header-right">
-    <div class="url-input-wrap">
-      <input class="url-input" id="scriptUrl" placeholder="วาง Apps Script Web App URL ที่นี่..." />
-      <button class="connect-btn" onclick="connectSheet()">เชื่อมต่อ</button>
-    </div>
     <span class="status-dot" id="statusDot"></span>
-    <span class="status-label" id="statusLabel">ยังไม่ได้เชื่อมต่อ</span>
+    <span class="status-label" id="statusLabel">กำลังโหลด...</span>
     <button class="refresh-btn" onclick="fetchData()" title="รีเฟรชข้อมูล">↻ รีเฟรช</button>
   </div>
 </div>
@@ -99,13 +84,6 @@
 <div class="person-tabs" id="personTabs"></div>
 
 <div class="main">
-  <div id="setupBanner" class="setup-banner" style="display:none">
-    <strong>📋 วิธีเชื่อมต่อ Google Sheet:</strong><br>
-    1. เปิด Google Sheet → <strong>Extensions → Apps Script</strong><br>
-    2. วางโค้ดจากไฟล์ <strong>google_apps_script.js</strong> → กด Save<br>
-    3. กด <strong>Deploy → New Deployment → Web App</strong> → Execute as: <em>Me</em> → Who has access: <em>Anyone</em> → Deploy<br>
-    4. คัดลอก URL ที่ได้ → วางในช่องด้านบน → กด <strong>เชื่อมต่อ</strong>
-  </div>
   <div class="summary-bar" id="summaryBar"></div>
   <div class="section-head">ภาพรวมรายแบรนด์</div>
   <div class="brand-grid" id="brandGrid"></div>
@@ -129,188 +107,202 @@
   </div>
 </div>
 
-<div class="loading-overlay" id="loadingOverlay" style="display:none">
+<div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
   <div style="font-size:14px;color:#555">กำลังดึงข้อมูลจาก Google Sheet...</div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Static fallback data (ใช้เมื่อยังไม่ได้เชื่อมต่อ Sheet) ──────────────
-function xlDate(n){
-  if(!n)return'-';
-  if(typeof n==='string'&&n.match(/^\d{4}-\d{2}-\d{2}$/)){
-    const[y,m,d]=n.split('-');
-    return new Date(y,m-1,d).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});
-  }
-  if(typeof n==='number'){
-    const b=new Date(1899,11,30);
-    return new Date(b.getTime()+n*86400000).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});
-  }
-  return String(n);
-}
-
-const STATIC_JOBS=[
-  {platform:'SHOPEE',job:'Report Summary Total - May',numJob:1,status:'✔',deadline:46146,actual:46142},
-  {platform:'SHOPEE',job:'Plan Budget Slide',numJob:1,status:'✔',deadline:46118,actual:46115},
-  {platform:'SHOPEE',job:'Plan Content',numJob:1,status:'✔',deadline:46118,actual:46115},
-  {platform:'SHOPEE',job:'Master Plan - Sales + Budget - April',numJob:1,status:'✔',deadline:46146,actual:46142},
-  {platform:'SHOPEE',job:'คิดค่า MKT GP + Fee',numJob:1,status:'✔',deadline:46122,actual:46121},
-  {platform:'SHOPEE',job:'ดึงบิล วันที่ 6',numJob:1,status:'✔',deadline:46122,actual:46120},
-  {platform:'SHOPEE',job:'กรอกยอดค่าใช้จ่ายบิล',numJob:1,status:'✔',deadline:46122,actual:46120},
-  {platform:'SHOPEE',job:'เก็บ Stat Daily ทุกช่องทาง',numJob:1,status:'✔',deadline:46146,actual:46146},
-  {platform:'SHOPEE',job:'Ads Facebook Awareness',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'SHOPEE',job:'Ads Inshop',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'SHOPEE',job:'Live Ads',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'SHOPEE',job:'Shopee Ads นอกแพลตฟอร์ม',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'LAZADA',job:'Search Brand Ads - April',numJob:1,status:'✔',deadline:46115,actual:46108},
-  {platform:'LAZADA',job:'Brand Max Ads 4.4',numJob:1,status:'✔',deadline:46115,actual:46108},
-  {platform:'LAZADA',job:'Brand Max Ads - April',numJob:1,status:'✔',deadline:46126,actual:46091},
-  {platform:'LAZADA',job:'Ads Facebook SHOPEE CPAS',numJob:1,status:'✔',deadline:46142,actual:46101},
-  {platform:'LAZADA',job:'Plan CPAS Facebook Shopee',numJob:1,status:'✔',deadline:46142,actual:46113},
-  {platform:'LAZADA',job:'Ads Inshop',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'LAZADA',job:'Lazada Ads นอกแพลตฟอร์ม',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'LAZADA',job:'Search Brand Ads 4.4',numJob:1,status:'✔',deadline:46115,actual:46111},
-  {platform:'LAZADA',job:'Ads Facebook Lazada CPAS',numJob:1,status:'✔',deadline:46142,actual:46111},
-  {platform:'LAZADA',job:'Plan CPAS Facebook Lazada',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'LAZADA',job:'แผน Affiliate 100 คน',numJob:1,status:'✔',deadline:46120,actual:46120},
-  {platform:'TIKTOK',job:'GMV Max',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'TIKTOK',job:'GMV Live',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'TIKTOK',job:'Set Ads Awareness Affiliate',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'TIKTOK',job:'Set Ads Awareness In House',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'TIKTOK',job:'Set Shop',numJob:1,status:'✔',deadline:46113,actual:46113},
-  {platform:'TIKTOK',job:'Broadcast 4.4 (เดือนนี้ยังไม่เริ่ม)',numJob:0,status:'',deadline:null,actual:null},
-  {platform:'TIKTOK',job:'Broadcast 4.15 (เดือนนี้ยังไม่เริ่ม)',numJob:0,status:'',deadline:null,actual:null},
-  {platform:'TIKTOK',job:'Broadcast 4.25 (เดือนนี้ยังไม่เริ่ม)',numJob:0,status:'',deadline:null,actual:null},
-  {platform:'TIKTOK',job:'ยิง Google Shopee',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'TIKTOK',job:'ยิง Google Lazada',numJob:1,status:'✔',deadline:46142,actual:46142},
-  {platform:'TIKTOK',job:'ยิง Google รวม',numJob:1,status:'✔',deadline:46142,actual:46142},
+const SHEET_ID = '1gMWQ4EIyDX04dA6TwFwvvwqFN3gSD4hsh_oEVDjWjx8';
+const SHEETS = [
+  { name: 'Digital Marketing', gid: '982780150' },
+  { name: 'Content - Xii',     gid: '1991867364' },
+  { name: 'Editor - Rock',     gid: '837970031' },
+  { name: 'Graphic - Pipe',    gid: '1861048863' },
+  { name: 'Graphic - Jo',      gid: '968852649' },
+  { name: 'Influencer - Ant',  gid: '1404465384' },
+  { name: 'Editor - Peet',     gid: '1267377490' },
 ];
 
-const STATIC_PEOPLE=[
-  'Digital Marketing','Xii','Sr. Rock','Pipe','Jo'
+const BRANDS = ['AUKEY','EARFUN','MOKIN'];
+const BRAND_TARGET = {AUKEY:31, EARFUN:17, MOKIN:4};
+const BRAND_COLOR = {AUKEY:'#1d4ed8', EARFUN:'#7c3aed', MOKIN:'#059669'};
+const BRAND_BADGE = {AUKEY:'badge-aukey', EARFUN:'badge-earfun', MOKIN:'badge-mokin'};
+const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar'};
+const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok'};
+const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color'};
+
+const COL_SETS = [
+  {brandCol:0, platCol:1, jobCol:2, dlCol:3, actCol:4, numCol:5, statusCol:6},
+  {brandCol:8, platCol:9, jobCol:10, dlCol:11, actCol:12, numCol:13, statusCol:14},
+  {brandCol:16, platCol:17, jobCol:18, dlCol:19, actCol:20, numCol:21, statusCol:22},
 ];
 
-const BRANDS=['AUKEY','EARFUN','MOKIN'];
-const BRAND_TARGET={AUKEY:31,EARFUN:17,MOKIN:4};
-const BRAND_COLOR={AUKEY:'#1d4ed8',EARFUN:'#7c3aed',MOKIN:'#059669'};
-const BRAND_BADGE={AUKEY:'badge-aukey',EARFUN:'badge-earfun',MOKIN:'badge-mokin'};
-const PLAT_BAR={SHOPEE:'shopee-bar',LAZADA:'lazada-bar',TIKTOK:'tiktok-bar'};
-const PLAT_PILL={SHOPEE:'pill-shopee',LAZADA:'pill-lazada',TIKTOK:'pill-tiktok'};
-const PLAT_COLOR_CLASS={SHOPEE:'shopee-color',LAZADA:'lazada-color',TIKTOK:'tiktok-color'};
-
-// ── State ──────────────────────────────────────────────────────────────────
-let liveData = null;   // data จาก Sheet (null = ใช้ static)
+let liveData = null;
 let currentPerson = 0;
 let currentPlat = 'ALL';
-let scriptUrl = localStorage.getItem('scriptUrl') || '';
 let autoRefreshTimer = null;
+let sheetNames = [];
 
-if(scriptUrl) document.getElementById('scriptUrl').value = scriptUrl;
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function getPeople(){
-  if(liveData) return Object.keys(liveData);
-  return STATIC_PEOPLE;
-}
-
-function getJobs(personName){
-  if(liveData && liveData[personName]){
-    return liveData[personName].jobs;
+function serialToDate(v) {
+  if (!v) return null;
+  if (typeof v === 'string' && v.match(/^\d{4}-\d{2}-\d{2}$/)) return v;
+  if (typeof v === 'number') {
+    const d = new Date(Date.UTC(1899,11,30) + v * 86400000);
+    return d.toISOString().slice(0,10);
   }
-  // static: สร้าง jobs จาก template × 3 brands
-  const jobs=[];
-  BRANDS.forEach(b=>{
-    STATIC_JOBS.forEach(t=>{
-      jobs.push({brand:b,platform:t.platform,job:t.job,numJob:t.numJob,
-                 status:t.status,deadline:t.deadline,actual:t.actual});
-    });
-  });
-  return jobs;
+  return String(v);
 }
 
-function isDone(status){ return status==='✔'||status==='done'; }
+function fmtDate(v) {
+  if (!v || v === '-') return '-';
+  const s = serialToDate(v);
+  if (!s) return '-';
+  const [y,m,d] = s.split('-');
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)-1957}`;
+}
 
-function toast(msg,type='ok'){
-  const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.style.background=type==='err'?'#dc2626':'#1e293b';
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'err' ? '#dc2626' : '#1e293b';
   el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),3000);
+  setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ── Connect & Fetch ────────────────────────────────────────────────────────
-function connectSheet(){
-  const url=document.getElementById('scriptUrl').value.trim();
-  if(!url){toast('กรุณาวาง URL ก่อนครับ','err');return;}
-  scriptUrl=url;
-  localStorage.setItem('scriptUrl',url);
-  fetchData();
+function isDone(status) { return status === '✔' || status === 'done' || status === 'TRUE' || status === true; }
+
+// ดึงข้อมูลผ่าน Google Sheets CSV export (ไม่ต้องใช้ API key)
+async function fetchSheet(gid) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  return parseCSV(text);
 }
 
-async function fetchData(){
-  if(!scriptUrl){
-    document.getElementById('setupBanner').style.display='block';
-    return;
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const row = [];
+    let inQ = false, cell = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
+      else { cell += c; }
+    }
+    row.push(cell.trim());
+    rows.push(row);
   }
-  document.getElementById('loadingOverlay').style.display='flex';
-  document.getElementById('statusDot').className='status-dot';
-  document.getElementById('statusLabel').textContent='กำลังเชื่อมต่อ...';
-  try{
-    // Apps Script doGet ต้องการ redirect ด้วย
-    const res=await fetch(scriptUrl+'?t='+Date.now(),{redirect:'follow'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const json=await res.json();
-    if(!json.ok) throw new Error('Script error');
-    liveData=json.data;
-    document.getElementById('statusDot').className='status-dot live';
-    document.getElementById('statusLabel').textContent='Live — '+new Date().toLocaleTimeString('th-TH');
-    document.getElementById('setupBanner').style.display='none';
+  return rows;
+}
+
+// ดึงรายชื่อ sheet ทั้งหมดผ่าน HTML
+async function fetchSheetNames() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+    const res = await fetch(url);
+    const html = await res.text();
+    const matches = [...html.matchAll(/"name":"([^"]+)","index":\d+,"sheetId":(\d+)/g)];
+    if (matches.length > 0) {
+      return matches.map(m => ({ name: m[1], gid: m[2] }));
+    }
+  } catch(e) {}
+  return [{ name: 'Sheet1', gid: SHEET_GID }];
+}
+
+async function fetchData() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusLabel').textContent = 'กำลังเชื่อมต่อ...';
+
+  try {
+    const result = {};
+
+    for (const sheet of SHEETS) {
+      const rows = await fetchSheet(sheet.gid);
+      const jobs = [];
+
+      for (let r = 6; r < rows.length; r++) {
+        const row = rows[r];
+        COL_SETS.forEach(c => {
+          const brand = String(row[c.brandCol] || '').trim();
+          const job = String(row[c.jobCol] || '').trim();
+          if (!brand || !job) return;
+          jobs.push({
+            brand: brand,
+            platform: String(row[c.platCol] || '').trim().toUpperCase(),
+            job: job,
+            deadline: serialToDate(row[c.dlCol]),
+            actual: serialToDate(row[c.actCol]),
+            numJob: Number(row[c.numCol] || 0),
+            status: String(row[c.statusCol] || '').trim(),
+          });
+        });
+      }
+
+      result[sheet.name] = { jobs };
+    }
+
+    liveData = result;
+    document.getElementById('statusDot').className = 'status-dot live';
+    document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
     toast('ดึงข้อมูลสำเร็จ ✓');
-    // auto-refresh ทุก 60 วินาที
     clearInterval(autoRefreshTimer);
-    autoRefreshTimer=setInterval(fetchData,60000);
-  }catch(e){
-    document.getElementById('statusDot').className='status-dot error';
-    document.getElementById('statusLabel').textContent='เชื่อมต่อไม่ได้';
-    toast('เชื่อมต่อไม่ได้: '+e.message,'err');
-  }finally{
-    document.getElementById('loadingOverlay').style.display='none';
+    autoRefreshTimer = setInterval(fetchData, 60000);
+  } catch(e) {
+    document.getElementById('statusDot').className = 'status-dot error';
+    document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
+    toast('เชื่อมต่อไม่ได้: ' + e.message, 'err');
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
     renderAll();
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
-function renderTabs(){
-  const people=getPeople();
-  document.getElementById('personTabs').innerHTML=people.map((p,i)=>
+function getPeople() {
+  if (liveData) return Object.keys(liveData);
+  return ['ไม่มีข้อมูล'];
+}
+
+function getJobs(personName) {
+  if (liveData && liveData[personName]) return liveData[personName].jobs;
+  return [];
+}
+
+function renderTabs() {
+  const people = getPeople();
+  document.getElementById('personTabs').innerHTML = people.map((p,i) =>
     `<div class="person-tab ${i===currentPerson?'active':''}" onclick="switchPerson(${i})">${p}</div>`
   ).join('');
 }
 
-function switchPerson(i){
-  currentPerson=i; currentPlat='ALL';
-  document.querySelectorAll('.f-btn').forEach((b,j)=>b.classList.toggle('active',j===0));
+function switchPerson(i) {
+  currentPerson = i; currentPlat = 'ALL';
+  document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
   renderAll();
 }
 
-function filterPlat(el,plat){
-  currentPlat=plat;
-  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+function filterPlat(el, plat) {
+  currentPlat = plat;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   renderTable();
 }
 
-function renderSummary(){
-  const name=getPeople()[currentPerson];
-  const jobs=getJobs(name);
-  const totalActual=jobs.reduce((s,j)=>s+(j.numJob||0),0);
-  const totalTarget=Object.values(BRAND_TARGET).reduce((a,b)=>a+b,0);
-  const done=jobs.filter(j=>isDone(j.status)).length;
-  const pct=totalTarget>0?Math.round(totalActual/totalTarget*100):0;
-  const srcLabel=liveData?'<span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">● LIVE</span>':'<span style="font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:8px">DEMO</span>';
-  document.getElementById('summaryBar').innerHTML=`
-    <div><div style="font-size:11px;color:#888;margin-bottom:2px">ชื่อ ${srcLabel}</div>
+function renderSummary() {
+  const name = getPeople()[currentPerson];
+  const jobs = getJobs(name);
+  const totalActual = jobs.reduce((s,j) => s+(j.numJob||0), 0);
+  const totalTarget = Object.values(BRAND_TARGET).reduce((a,b) => a+b, 0);
+  const done = jobs.filter(j => isDone(j.status)).length;
+  const pct = totalTarget > 0 ? Math.round(totalActual/totalTarget*100) : 0;
+  document.getElementById('summaryBar').innerHTML = `
+    <div><div style="font-size:11px;color:#888;margin-bottom:2px">ชื่อ <span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">● LIVE</span></div>
     <div style="font-size:17px;font-weight:700">${name}</div></div>
     <div style="width:1px;height:50px;background:#e9eef5"></div>
     <div><div class="metric-label">Actual รวม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
@@ -323,25 +315,25 @@ function renderSummary(){
     </div>`;
 }
 
-function renderBrandGrid(){
-  const name=getPeople()[currentPerson];
-  const jobs=getJobs(name);
-  document.getElementById('brandGrid').innerHTML=BRANDS.map(b=>{
-    const bj=jobs.filter(j=>j.brand===b);
-    const actual=bj.reduce((s,j)=>s+(j.numJob||0),0);
-    const target=BRAND_TARGET[b];
-    const pct=target>0?Math.round(actual/target*100):0;
-    const platRows=['SHOPEE','LAZADA','TIKTOK'].map(plat=>{
-      const pj=bj.filter(j=>j.platform===plat);
-      const done=pj.filter(j=>isDone(j.status)).length;
-      const total=pj.length;
-      const pp=total>0?Math.round(done/total*100):0;
-      return`<div class="plat-row">
+function renderBrandGrid() {
+  const name = getPeople()[currentPerson];
+  const jobs = getJobs(name);
+  document.getElementById('brandGrid').innerHTML = BRANDS.map(b => {
+    const bj = jobs.filter(j => j.brand === b);
+    const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
+    const target = BRAND_TARGET[b];
+    const pct = target > 0 ? Math.round(actual/target*100) : 0;
+    const platRows = ['SHOPEE','LAZADA','TIKTOK'].map(plat => {
+      const pj = bj.filter(j => j.platform === plat);
+      const done = pj.filter(j => isDone(j.status)).length;
+      const total = pj.length;
+      const pp = total > 0 ? Math.round(done/total*100) : 0;
+      return `<div class="plat-row">
         <span class="plat-label ${PLAT_COLOR_CLASS[plat]}" style="font-size:10px">${plat}</span>
         <div class="plat-bar-bg"><div class="plat-bar ${PLAT_BAR[plat]}" style="width:${pp}%"></div></div>
         <span class="plat-count">${done}/${total}</span></div>`;
     }).join('');
-    return`<div class="brand-card">
+    return `<div class="brand-card">
       <div class="brand-header">
         <span class="brand-badge ${BRAND_BADGE[b]}">${b}</span>
         <div class="brand-nums"><div class="brand-actual" style="color:${BRAND_COLOR[b]}">${actual}</div>
@@ -352,26 +344,23 @@ function renderBrandGrid(){
   }).join('');
 }
 
-function renderTable(){
-  const name=getPeople()[currentPerson];
-  let jobs=getJobs(name);
-  if(currentPlat!=='ALL') jobs=jobs.filter(j=>j.platform===currentPlat);
-  if(!jobs.length){
-    document.getElementById('jobBody').innerHTML=`<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
+function renderTable() {
+  const name = getPeople()[currentPerson];
+  let jobs = getJobs(name);
+  if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platform === currentPlat);
+  if (!jobs.length) {
+    document.getElementById('jobBody').innerHTML = `<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
     return;
   }
-  document.getElementById('jobBody').innerHTML=jobs.map((j,i)=>{
-    const done=isDone(j.status);
-    const dlStr=xlDate(j.deadline);
-    const actStr=xlDate(j.actual);
-    // เปรียบเทียบวันที่: ถ้า actual <= deadline = ทันกำหนด
-    let actColor='#555';
-    if(j.actual&&j.deadline){
-      const av=typeof j.actual==='number'?j.actual:new Date(j.actual).getTime();
-      const dv=typeof j.deadline==='number'?j.deadline:new Date(j.deadline).getTime();
-      actColor=av<=dv?'#059669':'#d97706';
+  document.getElementById('jobBody').innerHTML = jobs.map((j,i) => {
+    const done = isDone(j.status);
+    const dlStr = fmtDate(j.deadline);
+    const actStr = fmtDate(j.actual);
+    let actColor = '#555';
+    if (j.actual && j.deadline) {
+      actColor = j.actual <= j.deadline ? '#059669' : '#d97706';
     }
-    return`<tr>
+    return `<tr>
       <td style="color:#aaa;font-size:12px">${i+1}</td>
       <td><span class="brand-pill ${BRAND_BADGE[j.brand]||''}">${j.brand}</span></td>
       <td><span class="plat-pill ${PLAT_PILL[j.platform]||''}">${j.platform}</span></td>
@@ -384,17 +373,14 @@ function renderTable(){
   }).join('');
 }
 
-function renderAll(){
+function renderAll() {
   renderTabs();
   renderSummary();
   renderBrandGrid();
   renderTable();
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
-renderAll();
-if(scriptUrl) fetchData();
-else document.getElementById('setupBanner').style.display='block';
+fetchData();
 </script>
 </body>
 </html>
