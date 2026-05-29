@@ -148,11 +148,11 @@ let sheetNames = [];
 function serialToDate(v) {
   if (!v || v === '') return null;
   const s = String(v).trim();
-  // M/D/YYYY หรือ MM/DD/YYYY (Google Sheets export แบบอเมริกัน)
+  // D/M/YYYY หรือ DD/MM/YYYY (วัน/เดือน/ปี แบบไทย)
   if (s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
     const parts = s.split('/');
-    const m = parts[0].padStart(2,'0');
-    const d = parts[1].padStart(2,'0');
+    const d = parts[0].padStart(2,'0');
+    const m = parts[1].padStart(2,'0');
     const y = parts[2];
     return `${y}-${m}-${d}`;
   }
@@ -160,8 +160,8 @@ function serialToDate(v) {
   if (s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
   // Excel serial number
   if (!isNaN(s) && Number(s) > 0) {
-    const d = new Date(Date.UTC(1899,11,30) + Number(s) * 86400000);
-    return d.toISOString().slice(0,10);
+    const dt = new Date(Date.UTC(1899,11,30) + Number(s) * 86400000);
+    return dt.toISOString().slice(0,10);
   }
   return null;
 }
