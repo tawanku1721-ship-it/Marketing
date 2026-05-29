@@ -158,14 +158,17 @@ const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
 
-// โครงสร้างใหม่: A=Brand, B=Platform, C=Job, D=Deadline, E=Actual, F=NumJob, G=Link, H=Status
-// แต่ละชุดห่างกัน 10 คอลัมน์ (9 + 1 ว่าง)
+// โครงสร้างจริง: แต่ละชุดมี 8 คอลัมน์ + 1 ว่าง = 9 คอลัมน์/ชุด
+// 3 ชุดต่อเดือน = 27 คอลัมน์/เดือน
+// AUKEY-APRIL=A(0), EARFUN-APRIL=J(9), MOKIN-APRIL=S(18)
+// AUKEY-MAY=AB(27), EARFUN-MAY=AK(36), MOKIN-MAY=AT(45)
+// คอลัมน์: Brand(0), Platform(1), Job(2), Deadline(3), Actual(4), NumJob(5), Link(6), Status(7)
 function getColSets(monthIndex) {
-  const base = monthIndex * 30; // แต่ละเดือนมี 3 ชุด x 10 = 30 คอลัมน์
+  const base = monthIndex * 27;
   return [
     { brandCol:base+0,  platCol:base+1,  jobCol:base+2,  dlCol:base+3,  actCol:base+4,  numCol:base+5,  linkCol:base+6,  statusCol:base+7  },
-    { brandCol:base+10, platCol:base+11, jobCol:base+12, dlCol:base+13, actCol:base+14, numCol:base+15, linkCol:base+16, statusCol:base+17 },
-    { brandCol:base+20, platCol:base+21, jobCol:base+22, dlCol:base+23, actCol:base+24, numCol:base+25, linkCol:base+26, statusCol:base+27 },
+    { brandCol:base+9,  platCol:base+10, jobCol:base+11, dlCol:base+12, actCol:base+13, numCol:base+14, linkCol:base+15, statusCol:base+16 },
+    { brandCol:base+18, platCol:base+19, jobCol:base+20, dlCol:base+21, actCol:base+22, numCol:base+23, linkCol:base+24, statusCol:base+25 },
   ];
 }
 
@@ -281,7 +284,7 @@ async function fetchData() {
       for (let mi = 0; mi < MONTHS.length; mi++) {
         const colSets = getColSets(mi);
 
-        for (let r = 7; r < rows.length; r++) {
+        for (let r = 9; r < rows.length; r++) {
           const row = rows[r];
           colSets.forEach(c => {
             const brand = String(row[c.brandCol] || '').trim();
