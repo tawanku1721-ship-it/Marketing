@@ -287,9 +287,10 @@ async function fetchData() {
             const brand = String(row[c.brandCol] || '').trim();
             const job = String(row[c.jobCol] || '').trim();
 
-            // ข้ามแถว header (Brand, Platform, Job Responsibilities)
+            // ข้ามแถว header และแถวที่ไม่ใช่ข้อมูลจริง
             if (!brand || !job) return;
-            if (brand.toLowerCase() === 'brand' || job.toLowerCase() === 'job responsibilities') return;
+            if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
+            if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
 
             jobs.push({
               month: MONTHS[mi],
