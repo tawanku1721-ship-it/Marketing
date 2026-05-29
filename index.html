@@ -148,10 +148,13 @@ let sheetNames = [];
 function serialToDate(v) {
   if (!v || v === '') return null;
   const s = String(v).trim();
-  // d/m/yyyy หรือ dd/mm/yyyy
+  // M/D/YYYY หรือ MM/DD/YYYY (Google Sheets export แบบอเมริกัน)
   if (s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-    const [d, m, y] = s.split('/');
-    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    const parts = s.split('/');
+    const m = parts[0].padStart(2,'0');
+    const d = parts[1].padStart(2,'0');
+    const y = parts[2];
+    return `${y}-${m}-${d}`;
   }
   // yyyy-mm-dd
   if (s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
@@ -161,6 +164,16 @@ function serialToDate(v) {
     return d.toISOString().slice(0,10);
   }
   return null;
+}
+
+function fmtDate(v) {
+  if (!v || v === '-') return '-';
+  const s = serialToDate(v);
+  if (!s) return '-';
+  const [y, m, d] = s.split('-');
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) return '-';
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)-543}`;
 }
 
 function fmtDate(v) {
