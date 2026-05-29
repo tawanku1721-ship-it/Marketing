@@ -43,7 +43,9 @@
   .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
   .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
   .filter-row{display:flex;gap:8px;flex-wrap:wrap}
-  .f-btn{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s}
+  .f-btn-brand{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+  .f-btn-brand:hover{border-color:#185FA5;color:#185FA5}
+  .f-btn-brand.active{background:#1e293b;border-color:#1e293b;color:#fff}
   .f-btn:hover{border-color:#185FA5;color:#185FA5}
   .f-btn.active{background:#185FA5;border-color:#185FA5;color:#fff}
   .table-wrap{background:#fff;border-radius:12px;border:1px solid #e9eef5;overflow:auto;margin-top:12px}
@@ -92,6 +94,13 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <div id="monthFilterRow" style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="f-btn active" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>
+      </div>
+      <div style="width:1px;height:20px;background:#e2e8f0"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="f-btn-brand active" onclick="filterBrand(this,'ALL')">ทุกแบรนด์</button>
+        <button class="f-btn-brand" onclick="filterBrand(this,'AUKEY')">AUKEY</button>
+        <button class="f-btn-brand" onclick="filterBrand(this,'EARFUN')">EARFUN</button>
+        <button class="f-btn-brand" onclick="filterBrand(this,'MOKIN')">MOKIN</button>
       </div>
       <div style="width:1px;height:20px;background:#e2e8f0"></div>
       <div class="filter-row" id="filterRow">
@@ -340,12 +349,22 @@ function renderTabs() {
 }
 
 function switchPerson(i) {
-  currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL';
+  currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL'; currentBrand = 'ALL';
   document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
+  document.querySelectorAll('.f-btn-brand').forEach((b,j) => b.classList.toggle('active', j===0));
   renderAll();
 }
 
 let currentMonth = 'ALL';
+
+let currentBrand = 'ALL';
+
+function filterBrand(el, brand) {
+  currentBrand = brand;
+  document.querySelectorAll('.f-btn-brand').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
 
 function filterMonth(el, month) {
   currentMonth = month;
@@ -364,14 +383,20 @@ function filterPlat(el, plat) {
 
 function renderSummary() {
   const name = getPeople()[currentPerson];
-  const jobs = getJobs(name);
+  let jobs = getJobs(name);
+  if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
+
   const totalActual = jobs.reduce((s,j) => s+(j.numJob||0), 0);
   const totalTarget = Object.values(BRAND_TARGET).reduce((a,b) => a+b, 0);
   const done = jobs.filter(j => isDone(j.status)).length;
   const pct = totalTarget > 0 ? Math.round(totalActual/totalTarget*100) : 0;
+  const monthLabel = currentMonth === 'ALL' ? 'ทุกเดือน' : currentMonth;
+
   document.getElementById('summaryBar').innerHTML = `
     <div><div style="font-size:11px;color:#888;margin-bottom:2px">ชื่อ <span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">● LIVE</span></div>
     <div style="font-size:17px;font-weight:700">${name}</div></div>
+    <div style="width:1px;height:50px;background:#e9eef5"></div>
+    <div><div class="metric-label">เดือน</div><div style="font-size:16px;font-weight:700;color:#185FA5">${monthLabel}</div></div>
     <div style="width:1px;height:50px;background:#e9eef5"></div>
     <div><div class="metric-label">Actual รวม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
     <div><div class="metric-label">เป้าหมายรวม</div><div style="font-size:28px;font-weight:700;color:#444">${totalTarget}</div></div>
@@ -418,6 +443,7 @@ function renderTable() {
   const name = getPeople()[currentPerson];
   let jobs = getJobs(name);
   if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
+  if (currentBrand !== 'ALL') jobs = jobs.filter(j => j.brand === currentBrand);
   if (currentPlat !== 'ALL') jobs = jobs.filter(j => j.platform === currentPlat);
   if (!jobs.length) {
     document.getElementById('jobBody').innerHTML = `<tr><td colspan="8" class="no-data">ไม่พบรายการ</td></tr>`;
