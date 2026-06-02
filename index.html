@@ -506,15 +506,25 @@ function renderTable() {
 
 function renderTeamOverview() {
   const people = getPeople();
+  const loadedPeople = people.filter(name => liveData[name]);
   const monthOrder = ['April','May','June','July','August','September','October','November','December'];
 
-  // ปุ่มเลือกเดือน
   const monthBtns = [`<button class="f-btn ${currentMonth==='ALL'?'active':''}" onclick="filterTeamMonth(this,'ALL')">ทุกเดือน</button>`];
   monthOrder.forEach(m => {
     monthBtns.push(`<button class="f-btn ${currentMonth===m?'active':''}" onclick="filterTeamMonth(this,'${m}')">${m}</button>`);
   });
 
-  const rows = people.map(name => {
+  if (loadedPeople.length === 0) {
+    document.getElementById('mainSection').innerHTML = `
+      <div style="text-align:center;padding:60px;color:#aaa">
+        <div style="font-size:40px;margin-bottom:16px">👆</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px">ยังไม่มีข้อมูล</div>
+        <div style="font-size:13px">กดแท็บชื่อคนด้านบนเพื่อโหลดข้อมูลก่อนครับ</div>
+      </div>`;
+    return;
+  }
+
+  const rows = loadedPeople.map(name => {
     let jobs = getJobs(name);
     const monthlyTargets = getMonthlyTargets(name);
     if (currentMonth !== 'ALL') jobs = jobs.filter(j => j.month === currentMonth);
@@ -543,7 +553,7 @@ function renderTeamOverview() {
     </tr>`;
   }).join('');
 
-  let allJobs = people.flatMap(n => {
+  let allJobs = loadedPeople.flatMap(n => {
     let j = getJobs(n);
     if (currentMonth !== 'ALL') j = j.filter(jj => jj.month === currentMonth);
     return j;
@@ -551,14 +561,16 @@ function renderTeamOverview() {
   const totalActual = allJobs.reduce((s,j) => s+(j.numJob||0), 0);
   const totalDone = allJobs.filter(j => isDone(j.status)).length;
   const totalNotDone = allJobs.length - totalDone;
+  const notLoaded = people.length - loadedPeople.length;
 
   document.getElementById('mainSection').innerHTML = `
     <div class="summary-bar" style="margin-bottom:16px">
       <div><div class="metric-label">เดือน</div><div style="font-size:16px;font-weight:700;color:#185FA5">${currentMonth==='ALL'?'ทุกเดือน':currentMonth}</div></div>
       <div style="width:1px;height:50px;background:#e9eef5"></div>
-      <div><div class="metric-label">Actual รวมทั้งทีม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
+      <div><div class="metric-label">Actual รวม (${loadedPeople.length} คน)</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
       <div><div class="metric-label">เสร็จแล้ว</div><div style="font-size:28px;font-weight:700;color:#059669">${totalDone}</div></div>
       <div><div class="metric-label">ยังไม่เสร็จ</div><div style="font-size:28px;font-weight:700;color:#d97706">${totalNotDone}</div></div>
+      ${notLoaded > 0 ? `<div style="font-size:11px;color:#aaa;align-self:center">⚠️ ยังไม่โหลด ${notLoaded} คน<br>กดแท็บชื่อเพื่อโหลด</div>` : ''}
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <div class="section-head" style="margin:0">เลือกเดือน:</div>
@@ -579,6 +591,8 @@ function renderTeamOverview() {
       </table>
     </div>`;
 }
+
+
 
 function filterTeamMonth(el, month) {
   currentMonth = month;
