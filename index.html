@@ -176,7 +176,7 @@ function getColSets(monthIndex) {
 }
 
 let liveData = {};
-let currentPerson = -1;
+let currentPerson = 0;
 let currentPlat = 'ALL';
 let currentMonth = 'ALL';
 let currentBrand = 'ALL';
@@ -316,15 +316,10 @@ async function fetchPersonData(personIndex) {
 }
 
 function fetchData() {
-  if (currentPerson === -1) {
-    renderAll();
-    return;
-  }
   fetchPersonData(currentPerson);
 }
 
-// เริ่มต้นแสดงหน้าภาพรวมทีมก่อน
-renderAll();
+fetchPersonData(0);
 
 function getMonthlyTargets(personName) {
   if (liveData && liveData[personName]) return liveData[personName].monthlyTargets || {};
@@ -342,8 +337,7 @@ function getJobs(personName) {
 
 function renderTabs() {
   const people = getPeople();
-  const overviewTab = `<div class="person-tab ${currentPerson===-1?'active':''}" onclick="switchPerson(-1)">🏆 ภาพรวมทีม</div>`;
-  document.getElementById('personTabs').innerHTML = overviewTab + people.map((p,i) =>
+  document.getElementById('personTabs').innerHTML = people.map((p,i) =>
     `<div class="person-tab ${i===currentPerson?'active':''}" onclick="switchPerson(${i})">${p}</div>`
   ).join('');
 
@@ -366,7 +360,6 @@ function switchPerson(i) {
   currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL'; currentBrand = 'ALL';
   document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
   document.querySelectorAll('.f-btn-brand').forEach((b,j) => b.classList.toggle('active', j===0));
-  if (i === -1) { renderAll(); return; }
   const name = SHEETS[i] ? SHEETS[i].name : null;
   if (name && !liveData[name]) {
     fetchPersonData(i);
@@ -601,13 +594,6 @@ function filterTeamMonth(el, month) {
 
 function renderAll() {
   renderTabs();
-  if (currentPerson === -1) {
-    document.getElementById('summaryBar').style.display = 'none';
-    document.getElementById('brandGridWrap').style.display = 'none';
-    document.getElementById('tableWrap').style.display = 'none';
-    renderTeamOverview();
-    return;
-  }
   document.getElementById('mainSection').innerHTML = '';
   document.getElementById('summaryBar').style.display = 'flex';
   document.getElementById('brandGridWrap').style.display = 'block';
@@ -617,7 +603,6 @@ function renderAll() {
   renderTable();
 }
 
-renderAll();
 </script>
 </body>
 </html>
