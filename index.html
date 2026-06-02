@@ -41,11 +41,11 @@
   .plat-bar{height:100%;border-radius:3px}
   .plat-count{font-size:11px;color:#888;min-width:36px;text-align:right}
   .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
-  .facebook-color{color:#1877f2}.instagram-color{color:#e1306c}.offline-color{color:#64748b}.mainjob-color{color:#0f172a}
+  .facebook-color{color:#1877f2}.instagram-color{color:#e1306c}.offline-color{color:#64748b}.mainjob-color{color:#0f172a}.google-color{color:#ea4335}
   .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
-  .facebook-bar{background:#1877f2}.instagram-bar{background:#e1306c}.offline-bar{background:#64748b}.mainjob-bar{background:#0f172a}
+  .facebook-bar{background:#1877f2}.instagram-bar{background:#e1306c}.offline-bar{background:#64748b}.mainjob-bar{background:#0f172a}.google-bar{background:#ea4335}
   .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
-  .pill-facebook{background:#eff6ff;color:#1d4ed8}.pill-instagram{background:#fdf2f8;color:#9d174d}.pill-offline{background:#f1f5f9;color:#475569}.pill-mainjob{background:#f8fafc;color:#0f172a}
+  .pill-facebook{background:#eff6ff;color:#1d4ed8}.pill-instagram{background:#fdf2f8;color:#9d174d}.pill-offline{background:#f1f5f9;color:#475569}.pill-mainjob{background:#f8fafc;color:#0f172a}.pill-google{background:#fef2f2;color:#b91c1c}
   .filter-row{display:flex;gap:8px;flex-wrap:wrap}
   .f-btn-brand{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
   .f-btn-brand:hover{border-color:#185FA5;color:#185FA5}
@@ -118,6 +118,7 @@
         <button class="f-btn" onclick="filterPlat(this,'INSTAGRAM')">Instagram</button>
         <button class="f-btn" onclick="filterPlat(this,'OFFLINE')">Offline</button>
         <button class="f-btn" onclick="filterPlat(this,'MAINJOB')">Main Job</button>
+        <button class="f-btn" onclick="filterPlat(this,'GOOGLE')">Google</button>
       </div>
     </div>
   </div>
@@ -155,9 +156,9 @@ const BRANDS = ['AUKEY','EARFUN','MOKIN'];
 const BRAND_TARGET = {AUKEY:31, EARFUN:17, MOKIN:4};
 const BRAND_COLOR = {AUKEY:'#1d4ed8', EARFUN:'#7c3aed', MOKIN:'#059669'};
 const BRAND_BADGE = {AUKEY:'badge-aukey', EARFUN:'badge-earfun', MOKIN:'badge-mokin'};
-const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar', FACEBOOK:'facebook-bar', INSTAGRAM:'instagram-bar', OFFLINE:'offline-bar', MAINJOB:'mainjob-bar'};
-const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob'};
-const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color'};
+const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar', FACEBOOK:'facebook-bar', INSTAGRAM:'instagram-bar', OFFLINE:'offline-bar', MAINJOB:'mainjob-bar',GOOGLE:'google-bar'};
+const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob',GOOGLE:'pill-google'};
+const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color',GOOGLE:'google-color'};
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
 
@@ -289,7 +290,7 @@ async function fetchPersonData(personIndex) {
           jobs.push({
             month: MONTHS[mi],
             brand: brand,
-            platforms: String(row[c.platCol] || '').trim().toUpperCase().split(/[\s,\/]+/).filter(Boolean),
+            platforms: String(row[c.platCol] || '').trim().toUpperCase().replace('MAIN JOB','MAINJOB').split(/[\s,\/]+/).filter(Boolean),
             job: job,
             deadline: serialToDate(row[c.dlCol]),
             actual: serialToDate(row[c.actCol]),
@@ -439,7 +440,7 @@ function renderBrandGrid() {
     const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
     const target = BRAND_TARGET[b];
     const pct = target > 0 ? Math.round(actual/target*100) : 0;
-    const platRows = ['SHOPEE','LAZADA','TIKTOK','FACEBOOK','INSTAGRAM','OFFLINE','MAINJOB'].map(plat => {
+    const platRows = ['SHOPEE','LAZADA','TIKTOK','FACEBOOK','INSTAGRAM','OFFLINE','MAINJOB','GOOGLE'].map(plat => {
       const pj = bj.filter(j => j.platforms && j.platforms.includes(plat));
       if (pj.length === 0) return '';
       const done = pj.filter(j => isDone(j.status)).length;
