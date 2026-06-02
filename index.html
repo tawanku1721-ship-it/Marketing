@@ -175,10 +175,12 @@ function getColSets(monthIndex) {
   ];
 }
 
-let liveData = null;
+let liveData = {};
+let currentPerson = -1;
 let currentPlat = 'ALL';
+let currentMonth = 'ALL';
+let currentBrand = 'ALL';
 let autoRefreshTimer = null;
-let sheetNames = [];
 
 function serialToDate(v) {
   if (!v || v === '') return null;
@@ -257,83 +259,52 @@ function parseCSV(text) {
   return rows;
 }
 
-// ดึงรายชื่อ sheet ทั้งหมดผ่าน HTML
-async function fetchSheetNames() {
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-    const res = await fetch(url);
-    const html = await res.text();
-    const matches = [...html.matchAll(/"name":"([^"]+)","index":\d+,"sheetId":(\d+)/g)];
-    if (matches.length > 0) {
-      return matches.map(m => ({ name: m[1], gid: m[2] }));
-    }
-  } catch(e) {}
-  return [{ name: 'Sheet1', gid: SHEET_GID }];
-}
+async function fetchPersonData(personIndex) {
+  const sheet = SHEETS[personIndex];
+  if (!sheet) return;
 
-async function fetchData() {
   document.getElementById('loadingOverlay').style.display = 'flex';
   document.getElementById('statusDot').className = 'status-dot';
-  document.getElementById('statusLabel').textContent = 'กำลังเชื่อมต่อ...';
+  document.getElementById('statusLabel').textContent = 'กำลังโหลด ' + sheet.name + '...';
 
   try {
-    const result = {};
+    const rows = await fetchSheet(sheet.gid);
+    const jobs = [];
+    const monthlyTargets = {};
 
-    // ดึง Sheet ทีละ 2 อัน เพื่อไม่ให้ Google บล็อก
-    const allRows = [];
-    for (let i = 0; i < SHEETS.length; i += 2) {
-      const batch = SHEETS.slice(i, i + 2);
-      const batchRows = await Promise.all(batch.map(s => fetchSheet(s.gid)));
-      allRows.push(...batchRows);
-    }
+    for (let mi = 0; mi < MONTHS.length; mi++) {
+      const colSets = getColSets(mi);
+      const targetCol = mi * 27 + 1;
+      const targetVal = Number((rows[5] || [])[targetCol] || 0);
+      monthlyTargets[MONTHS[mi]] = targetVal;
 
-    for (let si = 0; si < SHEETS.length; si++) {
-      const sheet = SHEETS[si];
-      const rows = allRows[si];
-      const jobs = [];
-      const monthlyTargets = {};
-
-      for (let mi = 0; mi < MONTHS.length; mi++) {
-        const colSets = getColSets(mi);
-        const targetCol = mi * 27 + 1;
-        const targetVal = Number((rows[5] || [])[targetCol] || 0);
-        monthlyTargets[MONTHS[mi]] = targetVal;
-
-        for (let r = 9; r < rows.length; r++) {
-          const row = rows[r];
-          colSets.forEach(c => {
-            const brand = String(row[c.brandCol] || '').trim();
-            const job = String(row[c.jobCol] || '').trim();
-
-            // ข้ามแถว header และแถวที่ไม่ใช่ข้อมูลจริง
-            if (!brand || !job) return;
-            if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
-            if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
-
-            jobs.push({
-              month: MONTHS[mi],
-              brand: brand,
-              platforms: String(row[c.platCol] || '').trim().toUpperCase().split(/[\s,\/]+/).filter(Boolean),
-              job: job,
-              deadline: serialToDate(row[c.dlCol]),
-              actual: serialToDate(row[c.actCol]),
-              numJob: Number(row[c.numCol] || 0),
-              link: String(row[c.linkCol] || '').trim(),
-              status: String(row[c.statusCol] || '').trim(),
-            });
+      for (let r = 9; r < rows.length; r++) {
+        const row = rows[r];
+        colSets.forEach(c => {
+          const brand = String(row[c.brandCol] || '').trim();
+          const job = String(row[c.jobCol] || '').trim();
+          if (!brand || !job) return;
+          if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
+          if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
+          jobs.push({
+            month: MONTHS[mi],
+            brand: brand,
+            platforms: String(row[c.platCol] || '').trim().toUpperCase().split(/[\s,\/]+/).filter(Boolean),
+            job: job,
+            deadline: serialToDate(row[c.dlCol]),
+            actual: serialToDate(row[c.actCol]),
+            numJob: Number(row[c.numCol] || 0),
+            link: String(row[c.linkCol] || '').trim(),
+            status: String(row[c.statusCol] || '').trim(),
           });
-        }
+        });
       }
-
-      result[sheet.name] = { jobs, monthlyTargets };
     }
 
-    liveData = result;
+    liveData[sheet.name] = { jobs, monthlyTargets };
     document.getElementById('statusDot').className = 'status-dot live';
     document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
-    toast('ดึงข้อมูลสำเร็จ ✓');
-    clearInterval(autoRefreshTimer);
-    autoRefreshTimer = setInterval(fetchData, 60000);
+    toast('โหลด ' + sheet.name + ' สำเร็จ ✓');
   } catch(e) {
     document.getElementById('statusDot').className = 'status-dot error';
     document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
@@ -344,14 +315,24 @@ async function fetchData() {
   }
 }
 
+function fetchData() {
+  if (currentPerson === -1) {
+    renderAll();
+    return;
+  }
+  fetchPersonData(currentPerson);
+}
+
+// เริ่มต้นแสดงหน้าภาพรวมทีมก่อน
+renderAll();
+
 function getMonthlyTargets(personName) {
   if (liveData && liveData[personName]) return liveData[personName].monthlyTargets || {};
   return {};
 }
 
 function getPeople() {
-  if (liveData) return Object.keys(liveData);
-  return ['ไม่มีข้อมูล'];
+  return SHEETS.map(s => s.name);
 }
 
 function getJobs(personName) {
@@ -361,22 +342,13 @@ function getJobs(personName) {
 
 function renderTabs() {
   const people = getPeople();
-  // แท็บแรกเป็น "ภาพรวมทีม" เสมอ
   const overviewTab = `<div class="person-tab ${currentPerson===-1?'active':''}" onclick="switchPerson(-1)">🏆 ภาพรวมทีม</div>`;
   document.getElementById('personTabs').innerHTML = overviewTab + people.map((p,i) =>
     `<div class="person-tab ${i===currentPerson?'active':''}" onclick="switchPerson(${i})">${p}</div>`
   ).join('');
 
-  if (currentPerson === -1) {
-    document.getElementById('monthFilterRow').innerHTML =
-      `<button class="f-btn ${currentMonth==='ALL'?'active':''}" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>` +
-      ['April','May','June','July','August','September','October','November','December'].map(m =>
-        `<button class="f-btn" onclick="filterMonth(this,'${m}')">${m}</button>`
-      ).join('');
-    return;
-  }
+  if (currentPerson === -1) return;
 
-  // สร้างปุ่ม filter เดือนจากข้อมูลจริง
   const name = people[currentPerson];
   const jobs = getJobs(name);
   const months = [...new Set(jobs.map(j => j.month).filter(Boolean))];
@@ -394,14 +366,14 @@ function switchPerson(i) {
   currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL'; currentBrand = 'ALL';
   document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
   document.querySelectorAll('.f-btn-brand').forEach((b,j) => b.classList.toggle('active', j===0));
-  renderAll();
+  if (i === -1) { renderAll(); return; }
+  const name = SHEETS[i] ? SHEETS[i].name : null;
+  if (name && !liveData[name]) {
+    fetchPersonData(i);
+  } else {
+    renderAll();
+  }
 }
-
-let currentPerson = -1; // เริ่มที่หน้าภาพรวมทีม
-
-let currentMonth = 'ALL';
-
-let currentBrand = 'ALL';
 
 function filterBrand(el, brand) {
   currentBrand = brand;
@@ -534,7 +506,13 @@ function renderTable() {
 
 function renderTeamOverview() {
   const people = getPeople();
-  const mainSection = document.getElementById('mainSection');
+  const monthOrder = ['April','May','June','July','August','September','October','November','December'];
+
+  // ปุ่มเลือกเดือน
+  const monthBtns = [`<button class="f-btn ${currentMonth==='ALL'?'active':''}" onclick="filterTeamMonth(this,'ALL')">ทุกเดือน</button>`];
+  monthOrder.forEach(m => {
+    monthBtns.push(`<button class="f-btn ${currentMonth===m?'active':''}" onclick="filterTeamMonth(this,'${m}')">${m}</button>`);
+  });
 
   const rows = people.map(name => {
     let jobs = getJobs(name);
@@ -565,7 +543,6 @@ function renderTeamOverview() {
     </tr>`;
   }).join('');
 
-  // รวมทุกคน
   let allJobs = people.flatMap(n => {
     let j = getJobs(n);
     if (currentMonth !== 'ALL') j = j.filter(jj => jj.month === currentMonth);
@@ -575,13 +552,17 @@ function renderTeamOverview() {
   const totalDone = allJobs.filter(j => isDone(j.status)).length;
   const totalNotDone = allJobs.length - totalDone;
 
-  mainSection.innerHTML = `
-    <div class="summary-bar" style="margin-bottom:24px">
+  document.getElementById('mainSection').innerHTML = `
+    <div class="summary-bar" style="margin-bottom:16px">
       <div><div class="metric-label">เดือน</div><div style="font-size:16px;font-weight:700;color:#185FA5">${currentMonth==='ALL'?'ทุกเดือน':currentMonth}</div></div>
       <div style="width:1px;height:50px;background:#e9eef5"></div>
       <div><div class="metric-label">Actual รวมทั้งทีม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
       <div><div class="metric-label">เสร็จแล้ว</div><div style="font-size:28px;font-weight:700;color:#059669">${totalDone}</div></div>
       <div><div class="metric-label">ยังไม่เสร็จ</div><div style="font-size:28px;font-weight:700;color:#d97706">${totalNotDone}</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="section-head" style="margin:0">เลือกเดือน:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${monthBtns.join('')}</div>
     </div>
     <div class="section-head">ผลรวมรายคน</div>
     <div class="table-wrap" style="margin-top:12px">
@@ -599,26 +580,30 @@ function renderTeamOverview() {
     </div>`;
 }
 
+function filterTeamMonth(el, month) {
+  currentMonth = month;
+  renderTeamOverview();
+}
+
 function renderAll() {
   renderTabs();
   if (currentPerson === -1) {
-    document.getElementById('mainSection').style.display = 'block';
     document.getElementById('summaryBar').style.display = 'none';
     document.getElementById('brandGridWrap').style.display = 'none';
     document.getElementById('tableWrap').style.display = 'none';
     renderTeamOverview();
     return;
   }
+  document.getElementById('mainSection').innerHTML = '';
   document.getElementById('summaryBar').style.display = 'flex';
   document.getElementById('brandGridWrap').style.display = 'block';
   document.getElementById('tableWrap').style.display = 'block';
-  document.getElementById('mainSection').innerHTML = '';
   renderSummary();
   renderBrandGrid();
   renderTable();
 }
 
-fetchData();
+renderAll();
 </script>
 </body>
 </html>
