@@ -280,14 +280,18 @@ async function fetchData() {
   try {
     const result = {};
 
-    for (const sheet of SHEETS) {
-      const rows = await fetchSheet(sheet.gid);
+    // ดึงทุก Sheet พร้อมกัน (parallel)
+    const allRows = await Promise.all(SHEETS.map(s => fetchSheet(s.gid)));
+
+    for (let si = 0; si < SHEETS.length; si++) {
+      const sheet = SHEETS[si];
+      const rows = allRows[si];
       const jobs = [];
-      const monthlyTargets = {}; // เก็บเป้าหมายรายเดือน
+      const monthlyTargets = {};
 
       for (let mi = 0; mi < MONTHS.length; mi++) {
         const colSets = getColSets(mi);
-        const targetCol = mi * 27 + 1; // คอลัมน์ B, AC, ... (col index 1, 28, 55...)
+        const targetCol = mi * 27 + 1;
         const targetVal = Number((rows[5] || [])[targetCol] || 0);
         monthlyTargets[MONTHS[mi]] = targetVal;
 
