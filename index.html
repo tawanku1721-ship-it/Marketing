@@ -176,7 +176,6 @@ function getColSets(monthIndex) {
 }
 
 let liveData = null;
-let currentPerson = 0;
 let currentPlat = 'ALL';
 let autoRefreshTimer = null;
 let sheetNames = [];
@@ -280,8 +279,13 @@ async function fetchData() {
   try {
     const result = {};
 
-    // ดึงทุก Sheet พร้อมกัน (parallel)
-    const allRows = await Promise.all(SHEETS.map(s => fetchSheet(s.gid)));
+    // ดึง Sheet ทีละ 2 อัน เพื่อไม่ให้ Google บล็อก
+    const allRows = [];
+    for (let i = 0; i < SHEETS.length; i += 2) {
+      const batch = SHEETS.slice(i, i + 2);
+      const batchRows = await Promise.all(batch.map(s => fetchSheet(s.gid)));
+      allRows.push(...batchRows);
+    }
 
     for (let si = 0; si < SHEETS.length; si++) {
       const sheet = SHEETS[si];
