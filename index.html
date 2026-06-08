@@ -62,6 +62,10 @@
   .plat-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;display:inline-block}
   .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
   .status-done{color:#059669;font-weight:700}.status-pending{color:#d97706;font-size:12px;font-weight:500}
+  .status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill-completed{background:#dcfce7;color:#166534}.pill-cancelled{background:#fee2e2;color:#991b1b}
+  .pill-editing{background:#fff7ed;color:#c2410c}.pill-processing{background:#fef9c3;color:#854d0e}
+  .pill-unknown{background:#f1f5f9;color:#64748b}
   .num-job{text-align:center;font-weight:600;font-size:14px}
   .summary-bar{background:#fff;border-radius:12px;border:1px solid #e9eef5;padding:16px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
   .overall-bar-bg{flex:1;min-width:120px;height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden}
@@ -231,7 +235,19 @@ function toast(msg, type='ok') {
   setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-function isDone(status) { return status === '✔' || status === 'done' || status === 'TRUE' || status === true; }
+function isDone(status) {
+  const s = String(status || '').trim().toLowerCase();
+  return s === '✔' || s === 'done' || s === 'true' || s === 'completed';
+}
+function statusPill(status) {
+  const s = String(status || '').trim();
+  const sl = s.toLowerCase();
+  if (sl === 'completed' || sl === '✔' || sl === 'done' || sl === 'true') return '<span class="status-pill pill-completed">✔ Completed</span>';
+  if (sl === 'cancelled') return '<span class="status-pill pill-cancelled">✖ Cancelled</span>';
+  if (sl === 'editing') return '<span class="status-pill pill-editing">✏ Editing</span>';
+  if (sl === 'processing') return '<span class="status-pill pill-processing">⏳ Processing</span>';
+  return '<span class="status-pill pill-unknown">— ยังไม่เริ่ม</span>';
+}
 
 // ดึงข้อมูลผ่าน Google Sheets CSV export (ไม่ต้องใช้ API key)
 async function fetchSheet(gid) {
@@ -493,7 +509,7 @@ function renderTable() {
       <td style="font-size:12px;color:#555;white-space:nowrap">${dlStr}</td>
       <td style="font-size:12px;white-space:nowrap;color:${actColor}">${actStr}</td>
       <td>${linkBtn}</td>
-      <td class="${done?'status-done':'status-pending'}">${done?'✔ เสร็จแล้ว':'⏳ ยังไม่เริ่ม'}</td>
+      <td>${statusPill(j.status)}</td>
     </tr>`;
   }).join('');
 }
