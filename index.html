@@ -42,10 +42,19 @@
   .plat-count{font-size:11px;color:#888;min-width:36px;text-align:right}
   .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
   .facebook-color{color:#1877f2}.instagram-color{color:#e1306c}.offline-color{color:#64748b}.mainjob-color{color:#0f172a}.google-color{color:#ea4335}
+  .line-color{color:#06c755}.lemon8-color{color:#ff6200}.live-color{color:#ef4444}.x-color{color:#000}.website-color{color:#0369a1}.youtube-color{color:#ff0000}
   .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
   .facebook-bar{background:#1877f2}.instagram-bar{background:#e1306c}.offline-bar{background:#64748b}.mainjob-bar{background:#0f172a}.google-bar{background:#ea4335}
+  .line-bar{background:#06c755}.lemon8-bar{background:#ff6200}.live-bar{background:#ef4444}.x-bar{background:#000}.website-bar{background:#0369a1}.youtube-bar{background:#ff0000}
   .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
   .pill-facebook{background:#eff6ff;color:#1d4ed8}.pill-instagram{background:#fdf2f8;color:#9d174d}.pill-offline{background:#f1f5f9;color:#475569}.pill-mainjob{background:#f8fafc;color:#0f172a}.pill-google{background:#fef2f2;color:#b91c1c}
+  .pill-line{background:#e6faf0;color:#057a3a}.pill-lemon8{background:#fff4ee;color:#c44a00}.pill-live{background:#fff0f0;color:#b91c1c}.pill-x{background:#f1f5f9;color:#0f172a}.pill-website{background:#e0f2fe;color:#0369a1}.pill-youtube{background:#fff0f0;color:#cc0000}
+  /* Status pills */
+  .status-completed{background:#dcfce7;color:#166534;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
+  .status-cancelled{background:#fee2e2;color:#991b1b;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
+  .status-editing{background:#fef9c3;color:#854d0e;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
+  .status-processing{background:#ffedd5;color:#9a3412;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
+  .status-other{background:#f1f5f9;color:#475569;font-weight:600;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
   .filter-row{display:flex;gap:8px;flex-wrap:wrap}
   .f-btn-brand{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
   .f-btn-brand:hover{border-color:#185FA5;color:#185FA5}
@@ -62,10 +71,6 @@
   .plat-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;display:inline-block}
   .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
   .status-done{color:#059669;font-weight:700}.status-pending{color:#d97706;font-size:12px;font-weight:500}
-  .status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-  .pill-completed{background:#dcfce7;color:#166534}.pill-cancelled{background:#fee2e2;color:#991b1b}
-  .pill-editing{background:#fff7ed;color:#c2410c}.pill-processing{background:#fef9c3;color:#854d0e}
-  .pill-unknown{background:#f1f5f9;color:#64748b}
   .num-job{text-align:center;font-weight:600;font-size:14px}
   .summary-bar{background:#fff;border-radius:12px;border:1px solid #e9eef5;padding:16px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
   .overall-bar-bg{flex:1;min-width:120px;height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden}
@@ -120,9 +125,15 @@
         <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
         <button class="f-btn" onclick="filterPlat(this,'FACEBOOK')">Facebook</button>
         <button class="f-btn" onclick="filterPlat(this,'INSTAGRAM')">Instagram</button>
-        <button class="f-btn" onclick="filterPlat(this,'OFFLINE')">Offline</button>
-        <button class="f-btn" onclick="filterPlat(this,'MAINJOB')">Main Job</button>
+        <button class="f-btn" onclick="filterPlat(this,'LINE')">LINE</button>
         <button class="f-btn" onclick="filterPlat(this,'GOOGLE')">Google</button>
+        <button class="f-btn" onclick="filterPlat(this,'YOUTUBE')">YouTube</button>
+        <button class="f-btn" onclick="filterPlat(this,'LEMON8')">Lemon8</button>
+        <button class="f-btn" onclick="filterPlat(this,'LIVE')">Live</button>
+        <button class="f-btn" onclick="filterPlat(this,'X')">X</button>
+        <button class="f-btn" onclick="filterPlat(this,'WEBSITE')">Website</button>
+        <button class="f-btn" onclick="filterPlat(this,'MAINJOB')">Main Job</button>
+        <button class="f-btn" onclick="filterPlat(this,'OFFLINE')">Offline</button>
       </div>
     </div>
   </div>
@@ -160,9 +171,16 @@ const BRANDS = ['AUKEY','EARFUN','MOKIN'];
 const BRAND_TARGET = {AUKEY:31, EARFUN:17, MOKIN:4};
 const BRAND_COLOR = {AUKEY:'#1d4ed8', EARFUN:'#7c3aed', MOKIN:'#059669'};
 const BRAND_BADGE = {AUKEY:'badge-aukey', EARFUN:'badge-earfun', MOKIN:'badge-mokin'};
-const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar', FACEBOOK:'facebook-bar', INSTAGRAM:'instagram-bar', OFFLINE:'offline-bar', MAINJOB:'mainjob-bar',GOOGLE:'google-bar'};
-const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob',GOOGLE:'pill-google'};
-const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color',GOOGLE:'google-color'};
+const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar', FACEBOOK:'facebook-bar', INSTAGRAM:'instagram-bar', OFFLINE:'offline-bar', MAINJOB:'mainjob-bar', GOOGLE:'google-bar', LINE:'line-bar', LEMON8:'lemon8-bar', LIVE:'live-bar', X:'x-bar', WEBSITE:'website-bar', YOUTUBE:'youtube-bar'};
+const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob', GOOGLE:'pill-google', LINE:'pill-line', LEMON8:'pill-lemon8', LIVE:'pill-live', X:'pill-x', WEBSITE:'pill-website', YOUTUBE:'pill-youtube'};
+const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color', GOOGLE:'google-color', LINE:'line-color', LEMON8:'lemon8-color', LIVE:'live-color', X:'x-color', WEBSITE:'website-color', YOUTUBE:'youtube-color'};
+// Map raw platform text from sheet to internal key
+function normalizePlatform(raw) {
+  const s = raw.trim().toUpperCase()
+    .replace(/MAIN\s*JOB/, 'MAINJOB')
+    .replace(/LEMON\s*8/, 'LEMON8');
+  return s;
+}
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
 
@@ -236,17 +254,20 @@ function toast(msg, type='ok') {
 }
 
 function isDone(status) {
-  const s = String(status || '').trim().toLowerCase();
-  return s === '✔' || s === 'done' || s === 'true' || s === 'completed';
+  if (!status) return false;
+  const s = String(status).trim().toLowerCase();
+  return s === '✔' || s === 'done' || s === 'true' || s === 'completed' || s === 'complete';
 }
+
 function statusPill(status) {
   const s = String(status || '').trim();
   const sl = s.toLowerCase();
-  if (sl === 'completed' || sl === '✔' || sl === 'done' || sl === 'true') return '<span class="status-pill pill-completed">✔ Completed</span>';
-  if (sl === 'cancelled') return '<span class="status-pill pill-cancelled">✖ Cancelled</span>';
-  if (sl === 'editing') return '<span class="status-pill pill-editing">✏ Editing</span>';
-  if (sl === 'processing') return '<span class="status-pill pill-processing">⏳ Processing</span>';
-  return '<span class="status-pill pill-unknown">— ยังไม่เริ่ม</span>';
+  if (!s) return '<span class="status-other">-</span>';
+  if (sl === 'completed' || sl === 'complete' || sl === '✔' || sl === 'done' || sl === 'true') return `<span class="status-completed">✔ Completed</span>`;
+  if (sl === 'cancelled' || sl === 'canceled') return `<span class="status-cancelled">✖ Cancelled</span>`;
+  if (sl === 'editing') return `<span class="status-editing">✏ Editing</span>`;
+  if (sl === 'processing') return `<span class="status-processing">⏳ Processing</span>`;
+  return `<span class="status-other">${s}</span>`;
 }
 
 // ดึงข้อมูลผ่าน Google Sheets CSV export (ไม่ต้องใช้ API key)
@@ -306,7 +327,7 @@ async function fetchPersonData(personIndex) {
           jobs.push({
             month: MONTHS[mi],
             brand: brand,
-            platforms: String(row[c.platCol] || '').trim().toUpperCase().replace('MAIN JOB','MAINJOB').split(/[\s,\/]+/).filter(Boolean),
+            platforms: String(row[c.platCol] || '').trim().split(/[\s,\/]+/).filter(Boolean).map(normalizePlatform).filter(Boolean),
             job: job,
             deadline: serialToDate(row[c.dlCol]),
             actual: serialToDate(row[c.actCol]),
@@ -456,7 +477,7 @@ function renderBrandGrid() {
     const actual = bj.reduce((s,j) => s+(j.numJob||0), 0);
     const target = BRAND_TARGET[b];
     const pct = target > 0 ? Math.round(actual/target*100) : 0;
-    const platRows = ['SHOPEE','LAZADA','TIKTOK','FACEBOOK','INSTAGRAM','OFFLINE','MAINJOB','GOOGLE'].map(plat => {
+    const platRows = ['SHOPEE','LAZADA','TIKTOK','FACEBOOK','INSTAGRAM','LINE','GOOGLE','YOUTUBE','LEMON8','LIVE','X','WEBSITE','MAINJOB','OFFLINE'].map(plat => {
       const pj = bj.filter(j => j.platforms && j.platforms.includes(plat));
       if (pj.length === 0) return '';
       const done = pj.filter(j => isDone(j.status)).length;
