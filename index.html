@@ -334,11 +334,6 @@ async function fetchPersonData(personIndex) {
           if (!job && !platform) return; // skip only if both are empty
           const rawPlat = String(row[c.platCol] || '').trim();
           const parsedPlat = parsePlatforms(rawPlat);
-          // Debug: collect unique raw values for Ant's sheet
-          if (sheet.name === 'Influencer - Ant') {
-            window._debugPlats = window._debugPlats || new Set();
-            window._debugPlats.add(`"${rawPlat}" → [${parsedPlat.join(',')}]`);
-          }
           jobs.push({
             month: MONTHS[mi],
             brand: brand,
@@ -358,17 +353,6 @@ async function fetchPersonData(personIndex) {
     document.getElementById('statusDot').className = 'status-dot live';
     document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
     toast('โหลด ' + sheet.name + ' สำเร็จ ✓');
-    // Show debug panel for Ant's sheet
-    if (sheet.name === 'Influencer - Ant' && window._debugPlats) {
-      const panel = document.getElementById('debugPanel') || (() => {
-        const d = document.createElement('div');
-        d.id = 'debugPanel';
-        d.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#1e293b;color:#fff;padding:12px;border-radius:8px;font-size:11px;max-width:400px;max-height:300px;overflow:auto;z-index:9999;font-family:monospace;';
-        document.body.appendChild(d);
-        return d;
-      })();
-      panel.innerHTML = '<b>🔍 RAW PLATFORM VALUES (Ant)</b><br>' + [...window._debugPlats].join('<br>');
-    }
   } catch(e) {
     document.getElementById('statusDot').className = 'status-dot error';
     document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
