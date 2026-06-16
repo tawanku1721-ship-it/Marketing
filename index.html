@@ -322,28 +322,44 @@ async function fetchPersonData(personIndex) {
       const targetVal = Number((rows[5] || [])[targetCol] || 0);
       monthlyTargets[MONTHS[mi]] = targetVal;
 
+      // Track last seen job context per colSet (for carry-forward)
+      const lastCtx = colSets.map(() => ({ job:'', deadline:null, actual:null, numJob:0, link:'', status:'' }));
+
       for (let r = 9; r < rows.length; r++) {
         const row = rows[r];
-        colSets.forEach(c => {
+        colSets.forEach((c, ci) => {
           const brand = String(row[c.brandCol] || '').trim();
-          const job = String(row[c.jobCol] || '').trim();
           if (!brand) return;
           if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
           if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
-          const platform = String(row[c.platCol] || '').trim();
-          if (!job && !platform) return; // skip only if both are empty
+
           const rawPlat = String(row[c.platCol] || '').trim();
           const parsedPlat = parsePlatforms(rawPlat);
+          const job = String(row[c.jobCol] || '').trim();
+          const dlVal = row[c.dlCol]; const actVal = row[c.actCol];
+          const numJob = Number(row[c.numCol] || 0);
+          const link = String(row[c.linkCol] || '').trim();
+          const status = String(row[c.statusCol] || '').trim();
+
+          // If this row has a job description, update carry-forward context
+          if (job) {
+            lastCtx[ci] = { job, deadline: serialToDate(dlVal), actual: serialToDate(actVal), numJob, link, status };
+          }
+
+          if (!rawPlat && !job) return; // truly empty row
+
+          // Use own values if present, else carry forward from last job row
+          const ctx = job ? lastCtx[ci] : lastCtx[ci];
           jobs.push({
             month: MONTHS[mi],
-            brand: brand,
+            brand,
             platforms: parsedPlat,
-            job: job,
-            deadline: serialToDate(row[c.dlCol]),
-            actual: serialToDate(row[c.actCol]),
-            numJob: Number(row[c.numCol] || 0),
-            link: String(row[c.linkCol] || '').trim(),
-            status: String(row[c.statusCol] || '').trim(),
+            job: job || ctx.job,
+            deadline: serialToDate(dlVal) || ctx.deadline,
+            actual: serialToDate(actVal) || ctx.actual,
+            numJob: numJob || ctx.numJob,
+            link: link || ctx.link,
+            status: status || ctx.status,
           });
         });
       }
