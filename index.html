@@ -118,23 +118,7 @@
         <button class="f-btn-brand" onclick="filterBrand(this,'MOKIN')">MOKIN</button>
       </div>
       <div style="width:1px;height:20px;background:#e2e8f0"></div>
-      <div class="filter-row" id="filterRow">
-        <button class="f-btn active" onclick="filterPlat(this,'ALL')">ทั้งหมด</button>
-        <button class="f-btn" onclick="filterPlat(this,'SHOPEE')">Shopee</button>
-        <button class="f-btn" onclick="filterPlat(this,'LAZADA')">Lazada</button>
-        <button class="f-btn" onclick="filterPlat(this,'TIKTOK')">TikTok</button>
-        <button class="f-btn" onclick="filterPlat(this,'FACEBOOK')">Facebook</button>
-        <button class="f-btn" onclick="filterPlat(this,'INSTAGRAM')">Instagram</button>
-        <button class="f-btn" onclick="filterPlat(this,'LINE')">LINE</button>
-        <button class="f-btn" onclick="filterPlat(this,'GOOGLE')">Google</button>
-        <button class="f-btn" onclick="filterPlat(this,'YOUTUBE')">YouTube</button>
-        <button class="f-btn" onclick="filterPlat(this,'LEMON8')">Lemon8</button>
-        <button class="f-btn" onclick="filterPlat(this,'LIVE')">Live</button>
-        <button class="f-btn" onclick="filterPlat(this,'X')">X</button>
-        <button class="f-btn" onclick="filterPlat(this,'WEBSITE')">Website</button>
-        <button class="f-btn" onclick="filterPlat(this,'MAINJOB')">Main Job</button>
-        <button class="f-btn" onclick="filterPlat(this,'OFFLINE')">Offline</button>
-      </div>
+      <div class="filter-row" id="filterRow"></div>
     </div>
   </div>
   <div class="table-wrap">
@@ -423,12 +407,27 @@ function renderTabs() {
     monthBtns.push(`<button class="f-btn ${currentMonth===m?'active':''}" onclick="filterMonth(this,'${m}')">${m}</button>`);
   });
   document.getElementById('monthFilterRow').innerHTML = monthBtns.join('');
+
+  // Re-render brand filter buttons with correct active state
+  document.querySelectorAll('.f-btn-brand').forEach(b => {
+    const brand = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+    b.classList.toggle('active', brand === currentBrand);
+  });
+
+  // Re-render platform filter buttons with correct active state
+  const platDefs = [
+    ['ALL','ทั้งหมด'],['SHOPEE','Shopee'],['LAZADA','Lazada'],['TIKTOK','TikTok'],
+    ['FACEBOOK','Facebook'],['INSTAGRAM','Instagram'],['LINE','LINE'],['GOOGLE','Google'],
+    ['YOUTUBE','YouTube'],['LEMON8','Lemon8'],['LIVE','Live'],['X','X'],
+    ['WEBSITE','Website'],['MAINJOB','Main Job'],['OFFLINE','Offline']
+  ];
+  document.getElementById('filterRow').innerHTML = platDefs.map(([key, label]) =>
+    `<button class="f-btn ${currentPlat===key?'active':''}" onclick="filterPlat(this,'${key}')">${label}</button>`
+  ).join('');
 }
 
 function switchPerson(i) {
   currentPerson = i; currentPlat = 'ALL'; currentMonth = 'ALL'; currentBrand = 'ALL';
-  document.querySelectorAll('.f-btn').forEach((b,j) => b.classList.toggle('active', j===0));
-  document.querySelectorAll('.f-btn-brand').forEach((b,j) => b.classList.toggle('active', j===0));
   const name = SHEETS[i] ? SHEETS[i].name : null;
   if (name && !liveData[name]) {
     fetchPersonData(i);
