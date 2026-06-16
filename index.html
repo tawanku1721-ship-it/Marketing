@@ -327,9 +327,11 @@ async function fetchPersonData(personIndex) {
         colSets.forEach(c => {
           const brand = String(row[c.brandCol] || '').trim();
           const job = String(row[c.jobCol] || '').trim();
-          if (!brand || !job) return;
+          if (!brand) return;
           if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
           if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
+          const platform = String(row[c.platCol] || '').trim();
+          if (!job && !platform) return; // skip only if both are empty
           const rawPlat = String(row[c.platCol] || '').trim();
           const parsedPlat = parsePlatforms(rawPlat);
           // Debug: collect unique raw values for Ant's sheet
