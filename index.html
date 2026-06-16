@@ -175,11 +175,42 @@ const PLAT_BAR = {SHOPEE:'shopee-bar', LAZADA:'lazada-bar', TIKTOK:'tiktok-bar',
 const PLAT_PILL = {SHOPEE:'pill-shopee', LAZADA:'pill-lazada', TIKTOK:'pill-tiktok', FACEBOOK:'pill-facebook', INSTAGRAM:'pill-instagram', OFFLINE:'pill-offline', MAINJOB:'pill-mainjob', GOOGLE:'pill-google', LINE:'pill-line', LEMON8:'pill-lemon8', LIVE:'pill-live', X:'pill-x', WEBSITE:'pill-website', YOUTUBE:'pill-youtube'};
 const PLAT_COLOR_CLASS = {SHOPEE:'shopee-color', LAZADA:'lazada-color', TIKTOK:'tiktok-color', FACEBOOK:'facebook-color', INSTAGRAM:'instagram-color', OFFLINE:'offline-color', MAINJOB:'mainjob-color', GOOGLE:'google-color', LINE:'line-color', LEMON8:'lemon8-color', LIVE:'live-color', X:'x-color', WEBSITE:'website-color', YOUTUBE:'youtube-color'};
 // Map raw platform text from sheet to internal key
-function normalizePlatform(raw) {
-  const s = raw.trim().toUpperCase()
-    .replace(/MAIN\s*JOB/, 'MAINJOB')
-    .replace(/LEMON\s*8/, 'LEMON8');
-  return s;
+const PLAT_ALIASES = {
+  'MAIN JOB': 'MAINJOB', 'MAINJOB': 'MAINJOB',
+  'LEMON 8': 'LEMON8', 'LEMON8': 'LEMON8',
+  'SHOPEE': 'SHOPEE', 'LAZADA': 'LAZADA', 'TIKTOK': 'TIKTOK',
+  'FACEBOOK': 'FACEBOOK', 'FB': 'FACEBOOK',
+  'INSTAGRAM': 'INSTAGRAM', 'IG': 'INSTAGRAM',
+  'LINE': 'LINE', 'GOOGLE': 'GOOGLE',
+  'YOUTUBE': 'YOUTUBE', 'YT': 'YOUTUBE',
+  'LIVE': 'LIVE', 'X': 'X', 'TWITTER': 'X',
+  'WEBSITE': 'WEBSITE', 'WEB': 'WEBSITE',
+  'OFFLINE': 'OFFLINE',
+};
+
+function parsePlatforms(raw) {
+  if (!raw) return [];
+  // Normalize known multi-word platforms first (before splitting)
+  let s = raw.toUpperCase()
+    .replace(/MAIN\s+JOB/g, 'MAINJOB')
+    .replace(/LEMON\s*8/g, 'LEMON8');
+  // Split on comma, slash, newline, or multiple spaces (but not single space inside known words)
+  const parts = s.split(/[,\/\n\r]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
+  // For single-space separated tokens, try to match known platforms
+  const result = [];
+  for (const part of parts) {
+    // Try direct match first
+    if (PLAT_ALIASES[part]) {
+      result.push(PLAT_ALIASES[part]);
+    } else {
+      // Try splitting by single space and matching each token
+      const tokens = part.split(/\s+/);
+      tokens.forEach(t => {
+        if (PLAT_ALIASES[t]) result.push(PLAT_ALIASES[t]);
+      });
+    }
+  }
+  return [...new Set(result)]; // deduplicate
 }
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
@@ -327,7 +358,7 @@ async function fetchPersonData(personIndex) {
           jobs.push({
             month: MONTHS[mi],
             brand: brand,
-            platforms: String(row[c.platCol] || '').trim().split(/[\s,\/]+/).filter(Boolean).map(normalizePlatform).filter(Boolean),
+            platforms: parsePlatforms(String(row[c.platCol] || '').trim()),
             job: job,
             deadline: serialToDate(row[c.dlCol]),
             actual: serialToDate(row[c.actCol]),
