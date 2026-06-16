@@ -174,27 +174,18 @@ const PLAT_ALIASES = {
 
 function parsePlatforms(raw) {
   if (!raw) return [];
-  // Normalize known multi-word platforms first (before splitting)
-  let s = raw.toUpperCase()
-    .replace(/MAIN\s+JOB/g, 'MAINJOB')
-    .replace(/LEMON\s*8/g, 'LEMON8');
-  // Split on comma, slash, newline, or multiple spaces (but not single space inside known words)
-  const parts = s.split(/[,\/\n\r]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
-  // For single-space separated tokens, try to match known platforms
-  const result = [];
-  for (const part of parts) {
-    // Try direct match first
-    if (PLAT_ALIASES[part]) {
-      result.push(PLAT_ALIASES[part]);
-    } else {
-      // Try splitting by single space and matching each token
-      const tokens = part.split(/\s+/);
-      tokens.forEach(t => {
-        if (PLAT_ALIASES[t]) result.push(PLAT_ALIASES[t]);
-      });
-    }
+  const u = raw.trim().toUpperCase();
+  // Try whole string match first (single platform per cell)
+  if (PLAT_ALIASES[u]) return [PLAT_ALIASES[u]];
+  // Multi-platform: split by comma, slash, newline only
+  const parts = raw.split(/[,\/\n\r]+/).map(p => p.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    return [...new Set(parts.map(p => PLAT_ALIASES[p.toUpperCase()] || PLAT_ALIASES[p.toUpperCase().replace(/\s+/g,'')] || null).filter(Boolean))];
   }
-  return [...new Set(result)]; // deduplicate
+  // Single token fallback: strip all spaces and try
+  const stripped = u.replace(/\s+/g, '');
+  if (PLAT_ALIASES[stripped]) return [PLAT_ALIASES[stripped]];
+  return [];
 }
 
 const MONTHS = ['April','May','June','July','August','September','October','November','December'];
@@ -339,10 +330,16 @@ async function fetchPersonData(personIndex) {
           if (!brand || !job) return;
           if (['BRAND','PLATFORM','JOB RESPONSIBILITIES','JOB','TARGET','ACTUAL'].includes(brand.toUpperCase())) return;
           if (!['AUKEY','EARFUN','MOKIN'].includes(brand.toUpperCase())) return;
+          const rawPlat = String(row[c.platCol] || '').trim();
+          const parsedPlat = parsePlatforms(rawPlat);
+          // Debug: log raw vs parsed for Ant's sheet
+          if (sheet.name === 'Influencer - Ant') {
+            console.log(`[DEBUG plat] raw="${rawPlat}" → parsed=${JSON.stringify(parsedPlat)} | job="${String(row[c.jobCol]||'').trim().substring(0,40)}"`);
+          }
           jobs.push({
             month: MONTHS[mi],
             brand: brand,
-            platforms: parsePlatforms(String(row[c.platCol] || '').trim()),
+            platforms: parsedPlat,
             job: job,
             deadline: serialToDate(row[c.dlCol]),
             actual: serialToDate(row[c.actCol]),
