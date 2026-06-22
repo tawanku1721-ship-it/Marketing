@@ -267,13 +267,13 @@
 <script>
 const SHEET_ID = '1gMWQ4EIyDX04dA6TwFwvvwqFN3gSD4hsh_oEVDjWjx8';
 const SHEETS = [
-  { name: 'Digital Marketing', gid: '982780150' },
-  { name: 'Content - Xii',     gid: '1991867364' },
-  { name: 'Editor - Rock',     gid: '837970031' },
-  { name: 'Graphic - Pipe',    gid: '1861048863' },
-  { name: 'Graphic - Jo',      gid: '968852649' },
-  { name: 'Influencer - Ant',  gid: '1404465384' },
-  { name: 'Editor - Peet',     gid: '1267377490' },
+  { name: 'Digital Marketing', gid: '982780150',   colOffset: 0  },
+  { name: 'Content - Xii',     gid: '1991867364',  colOffset: 0  },
+  { name: 'Editor - Rock',     gid: '837970031',   colOffset: 0  },
+  { name: 'Graphic - Pipe',    gid: '1861048863',  colOffset: 0  },
+  { name: 'Graphic - Jo',      gid: '968852649',   colOffset: 0  },
+  { name: 'Influencer - Ant',  gid: '1404465384',  colOffset: 0  },
+  { name: 'Editor - Peet',     gid: '1267377490',  colOffset: 0  },
 ];
 
 const BRANDS = ['AUKEY','EARFUN','MOKIN'];
@@ -320,11 +320,8 @@ const MONTHS = ['April','May','June','July','August','September','October','Nove
 // AUKEY-APRIL=A(0), EARFUN-APRIL=J(9), MOKIN-APRIL=S(18)
 // AUKEY-MAY=AB(27), EARFUN-MAY=AK(36), MOKIN-MAY=AT(45)
 // คอลัมน์: Brand(0), Platform(1), Job(2), Deadline(3), Actual(4), NumJob(5), Link(6), Status(7)
-function getColSets(monthIndex) {
-  // May(0)=col27, June(1)=col54(?), each month = 27 cols apart
-  // From debug: May brand=27, plat=28, job=29, dl=30, act=31, num=32, link=33, status=34
-  // AUKEY=+0, EARFUN=+9, MOKIN=+18 within each month block
-  const base = 27 + monthIndex * 27;
+function getColSets(monthIndex, colOffset) {
+  const base = (colOffset || 0) + monthIndex * 27;
   return [
     { brandCol:base+0,  platCol:base+1,  jobCol:base+2,  dlCol:base+3,  actCol:base+4,  numCol:base+5,  linkCol:base+6,  statusCol:base+7  },
     { brandCol:base+9,  platCol:base+10, jobCol:base+11, dlCol:base+12, actCol:base+13, numCol:base+14, linkCol:base+15, statusCol:base+16 },
@@ -449,8 +446,8 @@ async function fetchPersonData(personIndex) {
     const monthlyTargets = {};
 
     for (let mi = 0; mi < MONTHS.length; mi++) {
-      const colSets = getColSets(mi);
-      const targetCol = 27 + mi * 27 + 1;
+      const colSets = getColSets(mi, sheet.colOffset || 0);
+      const targetCol = (sheet.colOffset || 0) + mi * 27 + 1;
       const targetVal = Number((rows[5] || [])[targetCol] || 0);
       monthlyTargets[MONTHS[mi]] = targetVal;
 
