@@ -290,19 +290,23 @@ async function fetchSheet(gid) {
 
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split('\n');
-  for (const line of lines) {
-    const row = [];
-    let inQ = false, cell = '';
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
-      else { cell += c; }
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQ && text[i+1] === '"') { cell += '"'; i++; } // escaped quote
+      else { inQ = !inQ; }
+    } else if (c === ',' && !inQ) {
+      row.push(cell.trim()); cell = '';
+    } else if ((c === '\n' || (c === '\r' && text[i+1] === '\n')) && !inQ) {
+      if (c === '\r') i++; // skip \r in \r\n
+      row.push(cell.trim()); cell = '';
+      rows.push(row); row = [];
+    } else {
+      cell += c;
     }
-    row.push(cell.trim());
-    rows.push(row);
   }
+  if (cell || row.length) { row.push(cell.trim()); rows.push(row); }
   return rows;
 }
 
