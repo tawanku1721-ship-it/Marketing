@@ -196,7 +196,10 @@ const MONTHS = ['April','May','June','July','August','September','October','Nove
 // AUKEY-MAY=AB(27), EARFUN-MAY=AK(36), MOKIN-MAY=AT(45)
 // คอลัมน์: Brand(0), Platform(1), Job(2), Deadline(3), Actual(4), NumJob(5), Link(6), Status(7)
 function getColSets(monthIndex) {
-  const base = monthIndex * 27;
+  // May(0)=col27, June(1)=col54(?), each month = 27 cols apart
+  // From debug: May brand=27, plat=28, job=29, dl=30, act=31, num=32, link=33, status=34
+  // AUKEY=+0, EARFUN=+9, MOKIN=+18 within each month block
+  const base = 27 + monthIndex * 27;
   return [
     { brandCol:base+0,  platCol:base+1,  jobCol:base+2,  dlCol:base+3,  actCol:base+4,  numCol:base+5,  linkCol:base+6,  statusCol:base+7  },
     { brandCol:base+9,  platCol:base+10, jobCol:base+11, dlCol:base+12, actCol:base+13, numCol:base+14, linkCol:base+15, statusCol:base+16 },
@@ -318,7 +321,7 @@ async function fetchPersonData(personIndex) {
 
     for (let mi = 0; mi < MONTHS.length; mi++) {
       const colSets = getColSets(mi);
-      const targetCol = mi * 27 + 1;
+      const targetCol = 27 + mi * 27 + 1;
       const targetVal = Number((rows[5] || [])[targetCol] || 0);
       monthlyTargets[MONTHS[mi]] = targetVal;
 
@@ -338,20 +341,11 @@ async function fetchPersonData(personIndex) {
           const dlVal = row[c.dlCol]; const actVal = row[c.actCol];
           const numJob = Number(row[c.numCol] || 0);
           const linkRaw = String(row[c.linkCol] || '').trim();
-          // DEBUG: show raw link for Ant sheet
-          if (sheet.name === 'Influencer - Ant' && linkRaw) {
-            window._debugLinks = window._debugLinks || [];
-            window._debugLinks.push(JSON.stringify(linkRaw.substring(0,200)));
-          }
           const links = linkRaw.split(/\n+/).map(l => l.trim()).filter(l => l.startsWith('http'));
           const link = links[0] || '';
           const status = String(row[c.statusCol] || '').trim();
           if (!rawPlat && !job && !links.length && !status) continue;
           rawJobs.push({ brand, rawPlat, job, dlVal, actVal, numJob, links, status });
-          if (sheet.name === 'Influencer - Ant') {
-            window._debugRaw = window._debugRaw || [];
-            window._debugRaw.push(`job="${job.substring(0,20)}" plat="${rawPlat}" links=${links.length} brand="${brand}"`);
-          }
         }
 
         // Status priority order
@@ -402,19 +396,6 @@ async function fetchPersonData(personIndex) {
     document.getElementById('statusDot').className = 'status-dot live';
     document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
     toast('โหลด ' + sheet.name + ' สำเร็จ ✓');
-    if (sheet.name === 'Influencer - Ant') {
-      const d = document.createElement('div');
-      d.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#1e293b;color:#0f0;padding:12px;border-radius:8px;font-size:10px;max-width:600px;max-height:400px;overflow:auto;z-index:9999;font-family:monospace;white-space:pre-wrap;';
-      // Show row 9 (first data row) column values around May area
-      const r9 = rows[9] || [];
-      const r10 = rows[10] || [];
-      let out = 'ROW 9 cols 26-40:\n';
-      for (let i=26;i<=42;i++) out += `[${i}]="${String(r9[i]||'').substring(0,30)}" `;
-      out += '\n\nROW 10 cols 26-40:\n';
-      for (let i=26;i<=42;i++) out += `[${i}]="${String(r10[i]||'').substring(0,30)}" `;
-      d.innerHTML = out;
-      document.body.appendChild(d);
-    }
   } catch(e) {
     document.getElementById('statusDot').className = 'status-dot error';
     document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
