@@ -402,10 +402,17 @@ async function fetchPersonData(personIndex) {
     document.getElementById('statusDot').className = 'status-dot live';
     document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
     toast('โหลด ' + sheet.name + ' สำเร็จ ✓');
-    if (sheet.name === 'Influencer - Ant' && window._debugRaw) {
+    if (sheet.name === 'Influencer - Ant') {
       const d = document.createElement('div');
-      d.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#1e293b;color:#0f0;padding:12px;border-radius:8px;font-size:10px;max-width:500px;max-height:400px;overflow:auto;z-index:9999;font-family:monospace;white-space:pre-wrap;';
-      d.innerHTML = '<b>DEBUG RAWJOBS (first 20):</b>\n' + window._debugRaw.slice(0,20).join('\n');
+      d.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#1e293b;color:#0f0;padding:12px;border-radius:8px;font-size:10px;max-width:600px;max-height:400px;overflow:auto;z-index:9999;font-family:monospace;white-space:pre-wrap;';
+      // Show row 9 (first data row) column values around May area
+      const r9 = rows[9] || [];
+      const r10 = rows[10] || [];
+      let out = 'ROW 9 cols 26-40:\n';
+      for (let i=26;i<=42;i++) out += `[${i}]="${String(r9[i]||'').substring(0,30)}" `;
+      out += '\n\nROW 10 cols 26-40:\n';
+      for (let i=26;i<=42;i++) out += `[${i}]="${String(r10[i]||'').substring(0,30)}" `;
+      d.innerHTML = out;
       document.body.appendChild(d);
     }
   } catch(e) {
