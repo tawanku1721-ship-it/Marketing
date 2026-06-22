@@ -578,6 +578,7 @@ function renderTable() {
     return;
   }
   document.getElementById('jobBody').innerHTML = jobs.map((j,i) => {
+    _popupJobs[i] = j;
     const done = isDone(j.status);
     const dlStr = fmtDate(j.deadline);
     const actStr = fmtDate(j.actual);
@@ -590,7 +591,7 @@ function renderTable() {
     ).join('');
     const links = j.links && j.links.length ? j.links : (j.link ? [j.link] : []);
     const linkBtn = links.length
-      ? links.map((url, i) => `<a href="${url}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;background:#f0f7ff;color:#185FA5;font-size:11px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe;margin-bottom:3px">🔗 ดูงาน${links.length > 1 ? ' '+(i+1) : ''}</a>`).join('<br>')
+      ? `<button onclick="showLinks(${i})" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;background:#f0f7ff;color:#185FA5;font-size:11px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer;">🔗 ดูงาน${links.length > 1 ? ' ('+links.length+')' : ''}</button>`
       : '<span style="color:#ccc;font-size:11px">-</span>';
     return `<tr>
       <td style="color:#aaa;font-size:12px">${i+1}</td>
@@ -701,6 +702,29 @@ function filterTeamMonth(el, month) {
   renderTeamOverview();
 }
 
+// Links popup
+let _popupJobs = [];
+function showLinks(idx) {
+  const j = _popupJobs[idx];
+  if (!j) return;
+  const links = j.links && j.links.length ? j.links : (j.link ? [j.link] : []);
+  const modal = document.getElementById('linksModal');
+  document.getElementById('linksModalTitle').textContent = j.job || 'ลิ้งค์งาน';
+  document.getElementById('linksModalBody').innerHTML = links.map((url, i) => {
+    const domain = (() => { try { return new URL(url).hostname.replace('www.',''); } catch(e) { return url; } })();
+    const icon = domain.includes('tiktok') ? '🎵' : domain.includes('facebook') ? '📘' : domain.includes('instagram') ? '📸' : domain.includes('youtube') || domain.includes('youtu.be') ? '▶️' : domain.includes('lemon8') ? '🍋' : domain.includes('x.com') || domain.includes('twitter') ? '✖️' : domain.includes('sharepoint') || domain.includes('drive.google') || domain.includes('docs.google') ? '📁' : '🔗';
+    return `<a href="${url}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;text-decoration:none;color:#1e293b;font-size:13px;margin-bottom:8px;transition:background .15s" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+      <span style="font-size:18px">${icon}</span>
+      <div style="overflow:hidden">
+        <div style="font-weight:600;color:#185FA5">${domain}</div>
+        <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px">${url}</div>
+      </div>
+      <span style="margin-left:auto;color:#94a3b8;font-size:18px">↗</span>
+    </a>`;
+  }).join('');
+  modal.style.display = 'flex';
+}
+
 function renderAll() {
   renderTabs();
   document.getElementById('mainSection').innerHTML = '';
@@ -713,5 +737,14 @@ function renderAll() {
 }
 
 </script>
+  <div id="linksModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:420px;max-width:95vw;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-weight:700;font-size:15px;color:#1e293b;flex:1;margin-right:12px" id="linksModalTitle"></div>
+        <button onclick="document.getElementById('linksModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;padding:0">✕</button>
+      </div>
+      <div id="linksModalBody"></div>
+    </div>
+  </div>
 </body>
 </html>
