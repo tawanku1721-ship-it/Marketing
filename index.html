@@ -341,12 +341,21 @@ async function fetchPersonData(personIndex) {
           rawJobs.push({ brand, rawPlat, job, dlVal, actVal, numJob, link, status });
         }
 
+        // Status priority order
+        const statusPriority = s => {
+          const sl = (s||'').toLowerCase();
+          if (sl === 'completed' || sl === 'complete' || sl === '✔') return 4;
+          if (sl === 'processing') return 3;
+          if (sl === 'editing') return 2;
+          if (sl === 'cancelled' || sl === 'canceled') return 1;
+          return 0;
+        };
+
         // Second pass: group consecutive platform-only rows into the last job row
         const grouped = [];
         let current = null;
         for (const r of rawJobs) {
           if (r.job) {
-            // New job row — start new group
             current = {
               brand: r.brand,
               platforms: parsePlatforms(r.rawPlat),
@@ -354,22 +363,23 @@ async function fetchPersonData(personIndex) {
               deadline: serialToDate(r.dlVal),
               actual: serialToDate(r.actVal),
               numJob: r.numJob,
-              link: r.link,
+              links: r.link ? [r.link] : [],
               status: r.status,
             };
             grouped.push(current);
           } else if (r.rawPlat && current) {
-            // Platform-only row — add platforms to current group
             parsePlatforms(r.rawPlat).forEach(p => {
               if (!current.platforms.includes(p)) current.platforms.push(p);
             });
-            // Take link/status if current doesn't have one
-            if (!current.link && r.link) current.link = r.link;
-            if (!current.status && r.status) current.status = r.status;
+            if (r.link && !current.links.includes(r.link)) current.links.push(r.link);
+            if (statusPriority(r.status) > statusPriority(current.status)) current.status = r.status;
+            if (!current.numJob && r.numJob) current.numJob = r.numJob;
+            if (!current.deadline && r.dlVal) current.deadline = serialToDate(r.dlVal);
+            if (!current.actual && r.actVal) current.actual = serialToDate(r.actVal);
           }
         }
 
-        grouped.forEach(j => jobs.push({ month: MONTHS[mi], ...j }));
+        grouped.forEach(j => jobs.push({ month: MONTHS[mi], brand: j.brand, platforms: j.platforms, job: j.job, deadline: j.deadline, actual: j.actual, numJob: j.numJob, links: j.links, status: j.status }));
       });
     }
 
@@ -569,7 +579,10 @@ function renderTable() {
     const platPills = (j.platforms || []).map(p =>
       `<span class="plat-pill ${PLAT_PILL[p]||'pill-offline'}" style="margin-right:3px">${p}</span>`
     ).join('');
-    const linkBtn = j.link ? `<a href="${j.link}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;background:#f0f7ff;color:#185FA5;font-size:11px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe">🔗 ดูงาน</a>` : '<span style="color:#ccc;font-size:11px">-</span>';
+    const links = j.links && j.links.length ? j.links : (j.link ? [j.link] : []);
+    const linkBtn = links.length
+      ? links.map((url, i) => `<a href="${url}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;background:#f0f7ff;color:#185FA5;font-size:11px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe;margin-bottom:3px">🔗 ดูงาน${links.length > 1 ? ' '+(i+1) : ''}</a>`).join('<br>')
+      : '<span style="color:#ccc;font-size:11px">-</span>';
     return `<tr>
       <td style="color:#aaa;font-size:12px">${i+1}</td>
       <td><span class="brand-pill ${BRAND_BADGE[j.brand]||''}">${j.brand}</span></td>
