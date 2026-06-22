@@ -338,6 +338,11 @@ async function fetchPersonData(personIndex) {
           const dlVal = row[c.dlCol]; const actVal = row[c.actCol];
           const numJob = Number(row[c.numCol] || 0);
           const linkRaw = String(row[c.linkCol] || '').trim();
+          // DEBUG: show raw link for Ant sheet
+          if (sheet.name === 'Influencer - Ant' && linkRaw) {
+            window._debugLinks = window._debugLinks || [];
+            window._debugLinks.push(JSON.stringify(linkRaw.substring(0,200)));
+          }
           const links = linkRaw.split(/\n+/).map(l => l.trim()).filter(l => l.startsWith('http'));
           const link = links[0] || '';
           const status = String(row[c.statusCol] || '').trim();
@@ -393,6 +398,12 @@ async function fetchPersonData(personIndex) {
     document.getElementById('statusDot').className = 'status-dot live';
     document.getElementById('statusLabel').textContent = 'Live — ' + new Date().toLocaleTimeString('th-TH');
     toast('โหลด ' + sheet.name + ' สำเร็จ ✓');
+    if (sheet.name === 'Influencer - Ant' && window._debugLinks) {
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#1e293b;color:#0f0;padding:12px;border-radius:8px;font-size:10px;max-width:500px;max-height:400px;overflow:auto;z-index:9999;font-family:monospace;white-space:pre-wrap;';
+      d.innerHTML = '<b>DEBUG LINKS (first 10):</b>\n' + window._debugLinks.slice(0,10).join('\n---\n');
+      document.body.appendChild(d);
+    }
   } catch(e) {
     document.getElementById('statusDot').className = 'status-dot error';
     document.getElementById('statusLabel').textContent = 'เชื่อมต่อไม่ได้';
