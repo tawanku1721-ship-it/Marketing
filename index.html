@@ -3,139 +3,264 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Team Performance Dashboard</title>
+<title>Team Performance Marketing — MBC Communications</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Sarabun',Arial,sans-serif;background:#F4F6FA;color:#1a1a2e;min-height:100vh}
-  .header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-  .logo{font-size:18px;font-weight:700;color:#185FA5;letter-spacing:-.3px}
-  .logo span{color:#0F6E56}
-  .header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block}
-  .status-dot.live{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
-  .status-dot.error{background:#ef4444}
-  .status-label{font-size:11px;color:#888}
-  .refresh-btn{padding:5px 10px;border:1px solid #dde3ed;border-radius:8px;font-size:12px;color:#555;background:#fff;cursor:pointer}
-  .refresh-btn:hover{background:#f8faff;border-color:#185FA5;color:#185FA5}
-  .person-tabs{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 32px;display:flex;gap:0;overflow-x:auto}
-  .person-tab{padding:14px 20px;font-size:14px;font-weight:500;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
-  .person-tab:hover{color:#185FA5;background:#f8faff}
-  .person-tab.active{color:#185FA5;border-bottom-color:#185FA5;background:#f8faff}
-  .main{padding:24px 32px;max-width:1200px;margin:0 auto}
-  .section-head{font-size:13px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+  :root{
+    --navy:#0B1929;--navy2:#112240;--navy3:#1a3a5c;
+    --blue:#1D6FD8;--blue-light:#3B8EF0;--blue-pale:#EBF3FF;
+    --teal:#0D9488;--teal-light:#14B8A6;
+    --slate:#64748B;--slate-light:#94A3B8;--slate-pale:#F1F5F9;
+    --white:#FFFFFF;--border:#E2E8F0;--border-dark:#CBD5E1;
+    --success:#059669;--warning:#D97706;--danger:#DC2626;
+    --text:#0F172A;--text2:#334155;--text3:#64748B;
+  }
+  body{font-family:'Inter','Sarabun',sans-serif;background:#F0F4FA;color:var(--text);min-height:100vh}
+
+  /* ── TOPBAR ── */
+  .topbar{
+    background:var(--navy);
+    padding:0 32px;
+    display:flex;align-items:center;gap:0;
+    height:56px;position:sticky;top:0;z-index:200;
+    box-shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+  .topbar-logo{display:flex;align-items:center;gap:12px;margin-right:32px}
+  .topbar-logo-mark{
+    width:32px;height:32px;border-radius:8px;
+    background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;color:#fff;letter-spacing:-.5px;
+    flex-shrink:0;
+  }
+  .topbar-brand{display:flex;flex-direction:column;line-height:1.2}
+  .topbar-brand-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em}
+  .topbar-brand-sub{font-size:10px;color:rgba(255,255,255,.45);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
+  .topbar-divider{width:1px;height:28px;background:rgba(255,255,255,.12);margin:0 20px}
+  .topbar-title{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);letter-spacing:.02em}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .status-badge{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:#475569;flex-shrink:0}
+  .status-dot.live{background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.2);animation:pulse 2s infinite}
+  .status-dot.error{background:#EF4444}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,.2)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.1)}}
+  .status-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:400}
+  .refresh-btn{
+    padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+    color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;letter-spacing:.02em;
+  }
+  .refresh-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)}
+
+  /* ── PERSON TABS ── */
+  .person-tabs-wrap{background:var(--navy2);border-bottom:1px solid rgba(255,255,255,.06);padding:0 32px;display:flex;gap:0;overflow-x:auto}
+  .person-tabs-wrap::-webkit-scrollbar{height:3px}.person-tabs-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+  .person-tab{
+    padding:12px 18px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.45);
+    cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;
+    letter-spacing:.01em;
+  }
+  .person-tab:hover{color:rgba(255,255,255,.8)}
+  .person-tab.active{color:#fff;border-bottom-color:var(--blue-light);font-weight:600}
+
+  /* ── MAIN LAYOUT ── */
+  .main{padding:24px 32px 48px;max-width:1280px;margin:0 auto}
+
+  /* ── SUMMARY HEADER CARD ── */
+  .person-hero{
+    background:var(--white);border-radius:14px;
+    border:1px solid var(--border);
+    padding:20px 24px;margin-bottom:20px;
+    display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+  }
+  .person-hero-name{display:flex;flex-direction:column;gap:4px;min-width:160px}
+  .person-hero-role{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;animation:pulse 2s infinite}
+  .person-hero-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+  .hero-divider{width:1px;height:44px;background:var(--border);flex-shrink:0}
+  .hero-stat{display:flex;flex-direction:column;gap:3px;min-width:70px}
+  .hero-stat-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+  .hero-stat-value{font-size:24px;font-weight:800;letter-spacing:-.5px;line-height:1}
+  .hero-stat-value.blue{color:var(--blue)}
+  .hero-stat-value.dark{color:var(--text2)}
+  .hero-stat-value.green{color:var(--success)}
+  .hero-stat-value.orange{color:var(--warning)}
+  .hero-progress{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}
+  .hero-progress-label{display:flex;justify-content:space-between;align-items:center}
+  .hero-progress-text{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+  .hero-progress-pct{font-size:14px;font-weight:800;letter-spacing:-.3px}
+  .progress-track{height:10px;background:var(--slate-pale);border-radius:5px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+  /* ── SECTION LABEL ── */
+  .section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+  /* ── BRAND GRID ── */
   .brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
-  .brand-card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e9eef5}
-  .brand-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .brand-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.05em}
-  .badge-aukey{background:#dbeafe;color:#1e40af}
-  .badge-earfun{background:#ede9fe;color:#4c1d95}
-  .badge-mokin{background:#d1fae5;color:#065f46}
+  .brand-card{
+    background:var(--white);border-radius:12px;padding:18px 20px;
+    border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.04);
+    transition:box-shadow .2s;
+  }
+  .brand-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+  .brand-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+  .brand-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.06em}
+  .badge-aukey{background:#DBEAFE;color:#1D4ED8}
+  .badge-earfun{background:#EDE9FE;color:#5B21B6}
+  .badge-mokin{background:#D1FAE5;color:#065F46}
   .brand-nums{text-align:right}
-  .brand-actual{font-size:20px;font-weight:700}
-  .brand-target{font-size:11px;color:#aaa}
-  .big-bar-bg{height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-bottom:12px}
-  .big-bar{height:100%;border-radius:4px;transition:width .5s}
-  .plat-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-  .plat-label{font-size:11px;font-weight:600;width:52px;flex-shrink:0}
-  .plat-bar-bg{flex:1;height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden}
-  .plat-bar{height:100%;border-radius:3px}
-  .plat-count{font-size:11px;color:#888;min-width:36px;text-align:right}
-  .shopee-color{color:#e85d04}.lazada-color{color:#7c3aed}.tiktok-color{color:#065f46}
-  .facebook-color{color:#1877f2}.instagram-color{color:#e1306c}.offline-color{color:#64748b}.mainjob-color{color:#0f172a}.google-color{color:#ea4335}
-  .line-color{color:#06c755}.lemon8-color{color:#ff6200}.live-color{color:#ef4444}.x-color{color:#000}.website-color{color:#0369a1}.youtube-color{color:#ff0000}
-  .shopee-bar{background:#e85d04}.lazada-bar{background:#7c3aed}.tiktok-bar{background:#0d9488}
-  .facebook-bar{background:#1877f2}.instagram-bar{background:#e1306c}.offline-bar{background:#64748b}.mainjob-bar{background:#0f172a}.google-bar{background:#ea4335}
-  .line-bar{background:#06c755}.lemon8-bar{background:#ff6200}.live-bar{background:#ef4444}.x-bar{background:#000}.website-bar{background:#0369a1}.youtube-bar{background:#ff0000}
-  .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
-  .pill-facebook{background:#eff6ff;color:#1d4ed8}.pill-instagram{background:#fdf2f8;color:#9d174d}.pill-offline{background:#f1f5f9;color:#475569}.pill-mainjob{background:#f8fafc;color:#0f172a}.pill-google{background:#fef2f2;color:#b91c1c}
-  .pill-line{background:#e6faf0;color:#057a3a}.pill-lemon8{background:#fff4ee;color:#c44a00}.pill-live{background:#fff0f0;color:#b91c1c}.pill-x{background:#f1f5f9;color:#0f172a}.pill-website{background:#e0f2fe;color:#0369a1}.pill-youtube{background:#fff0f0;color:#cc0000}
-  /* Status pills */
-  .status-completed{background:#dcfce7;color:#166534;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
-  .status-cancelled{background:#fee2e2;color:#991b1b;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
-  .status-editing{background:#fef9c3;color:#854d0e;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
-  .status-processing{background:#ffedd5;color:#9a3412;font-weight:700;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
-  .status-other{background:#f1f5f9;color:#475569;font-weight:600;padding:3px 10px;border-radius:10px;font-size:11px;display:inline-block}
-  .filter-row{display:flex;gap:8px;flex-wrap:wrap}
-  .f-btn-brand{padding:6px 14px;border-radius:16px;border:1px solid #dde3ed;background:#fff;color:#666;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
-  .f-btn-brand:hover{border-color:#185FA5;color:#185FA5}
-  .f-btn-brand.active{background:#1e293b;border-color:#1e293b;color:#fff}
-  .f-btn:hover{border-color:#185FA5;color:#185FA5}
-  .f-btn.active{background:#185FA5;border-color:#185FA5;color:#fff}
-  .table-wrap{background:#fff;border-radius:12px;border:1px solid #e9eef5;overflow:auto;margin-top:12px}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead th{background:#f8faff;padding:10px 14px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#666;border-bottom:1px solid #e9eef5;white-space:nowrap}
-  tbody td{padding:10px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  .brand-actual{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1}
+  .brand-target{font-size:11px;color:var(--slate-light);margin-top:2px}
+  .big-bar-bg{height:6px;background:var(--slate-pale);border-radius:3px;overflow:hidden;margin-bottom:14px}
+  .big-bar{height:100%;border-radius:3px;transition:width .5s}
+  .plat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .plat-label{font-size:10px;font-weight:600;width:64px;flex-shrink:0;letter-spacing:.03em}
+  .plat-bar-bg{flex:1;height:4px;background:var(--slate-pale);border-radius:2px;overflow:hidden}
+  .plat-bar{height:100%;border-radius:2px}
+  .plat-count{font-size:10px;color:var(--slate-light);min-width:40px;text-align:right}
+
+  /* ── PLATFORM COLORS ── */
+  .shopee-color{color:#E85D04}.lazada-color{color:#7C3AED}.tiktok-color{color:#0D9488}
+  .facebook-color{color:#1877F2}.instagram-color{color:#E1306C}.offline-color{color:#64748B}
+  .mainjob-color{color:#0F172A}.google-color{color:#EA4335}.line-color{color:#06C755}
+  .lemon8-color{color:#FF6200}.live-color{color:#EF4444}.x-color{color:#0F172A}
+  .website-color{color:#0369A1}.youtube-color{color:#FF0000}
+  .shopee-bar{background:#E85D04}.lazada-bar{background:#7C3AED}.tiktok-bar{background:#0D9488}
+  .facebook-bar{background:#1877F2}.instagram-bar{background:#E1306C}.offline-bar{background:#94A3B8}
+  .mainjob-bar{background:#334155}.google-bar{background:#EA4335}.line-bar{background:#06C755}
+  .lemon8-bar{background:#FF6200}.live-bar{background:#EF4444}.x-bar{background:#334155}
+  .website-bar{background:#0369A1}.youtube-bar{background:#FF0000}
+  .pill-shopee{background:#FFF1E6;color:#C4500A}.pill-lazada{background:#F5F3FF;color:#5B21B6}
+  .pill-tiktok{background:#CCFBF1;color:#0F766E}.pill-facebook{background:#EFF6FF;color:#1D4ED8}
+  .pill-instagram{background:#FDF2F8;color:#9D174D}.pill-offline{background:#F1F5F9;color:#475569}
+  .pill-mainjob{background:#F8FAFC;color:#334155}.pill-google{background:#FEF2F2;color:#B91C1C}
+  .pill-line{background:#DCFCE7;color:#15803D}.pill-lemon8{background:#FFF4EE;color:#C44A00}
+  .pill-live{background:#FFF0F0;color:#B91C1C}.pill-x{background:#F8FAFC;color:#0F172A}
+  .pill-website{background:#E0F2FE;color:#0369A1}.pill-youtube{background:#FFF0F0;color:#CC0000}
+
+  /* ── STATUS PILLS ── */
+  .status-completed{background:#DCFCE7;color:#166534;font-weight:600;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .status-cancelled{background:#FEE2E2;color:#991B1B;font-weight:600;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .status-editing{background:#FEF9C3;color:#854D0E;font-weight:600;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .status-processing{background:#FED7AA;color:#9A3412;font-weight:600;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .status-other{background:#F1F5F9;color:#475569;font-weight:500;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-block}
+
+  /* ── FILTERS ── */
+  .filters-wrap{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px}
+  .filter-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .filter-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+  .f-btn{
+    padding:5px 12px;border-radius:6px;border:1px solid var(--border);
+    background:var(--white);color:var(--slate);cursor:pointer;font-size:11.5px;font-weight:500;
+    transition:all .15s;letter-spacing:.01em;
+  }
+  .f-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-pale)}
+  .f-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .f-btn-brand{
+    padding:5px 12px;border-radius:6px;border:1px solid var(--border);
+    background:var(--white);color:var(--slate);cursor:pointer;font-size:11.5px;font-weight:500;
+    transition:all .15s;
+  }
+  .f-btn-brand:hover{border-color:var(--navy);color:var(--navy)}
+  .f-btn-brand.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+
+  /* ── TABLE ── */
+  .table-wrap{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{
+    background:#F8FAFC;padding:10px 14px;text-align:left;
+    font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid #F8FAFC;vertical-align:middle}
   tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover td{background:#f8faff}
-  .brand-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;display:inline-block}
-  .plat-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;display:inline-block}
-  .pill-shopee{background:#fff1e6;color:#c4500a}.pill-lazada{background:#f5f3ff;color:#5b21b6}.pill-tiktok{background:#ecfdf5;color:#065f46}
-  .status-done{color:#059669;font-weight:700}.status-pending{color:#d97706;font-size:12px;font-weight:500}
-  .num-job{text-align:center;font-weight:600;font-size:14px}
-  .summary-bar{background:#fff;border-radius:12px;border:1px solid #e9eef5;padding:16px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-  .overall-bar-bg{flex:1;min-width:120px;height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden}
-  .overall-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#185FA5,#0d9488);transition:width .6s}
-  .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px}
-  .spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin .7s linear infinite}
+  tbody tr:hover td{background:#FAFBFF}
+  .brand-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;display:inline-block;letter-spacing:.04em}
+  .plat-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;display:inline-block;margin:1px 2px 1px 0}
+  .num-job{text-align:center;font-weight:700;font-size:15px}
+  .no-data{text-align:center;padding:48px;color:var(--slate-light);font-size:13px}
+
+  /* ── TEAM OVERVIEW TABLE ── */
+  .team-table-wrap{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:24px}
+  .team-table{width:100%;border-collapse:collapse;font-size:13px}
+  .team-table thead th{background:#F8FAFC;padding:10px 16px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:1px solid var(--border);text-align:left}
+  .team-table tbody td{padding:13px 16px;border-bottom:1px solid #F8FAFC;vertical-align:middle}
+  .team-table tbody tr:last-child td{border-bottom:none}
+  .team-table tbody tr:hover td{background:#FAFBFF}
+
+  /* ── LOADING & TOAST ── */
+  .loading-overlay{position:fixed;inset:0;background:rgba(11,25,41,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;backdrop-filter:blur(2px)}
+  .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--blue-light);border-radius:50%;animation:spin .7s linear infinite}
+  .loading-text{font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;z-index:9999}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:8px;font-size:12.5px;opacity:0;transition:opacity .3s;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1)}
   .toast.show{opacity:1}
-  .no-data{text-align:center;padding:40px;color:#aaa;font-size:14px}
-  .metric-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">Team <span>Performance</span></div>
-  <div style="font-size:13px;color:#444;margin-left:8px">Dashboard</div>
-  <div class="header-right">
-    <span class="status-dot" id="statusDot"></span>
-    <span class="status-label" id="statusLabel">กำลังโหลด...</span>
-    <button class="refresh-btn" onclick="fetchData()" title="รีเฟรชข้อมูล">↻ รีเฟรช</button>
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-mark">M</div>
+    <div class="topbar-brand">
+      <div class="topbar-brand-name">MBC Communications</div>
+      <div class="topbar-brand-sub">Marketing</div>
+    </div>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-title">Key Performance Indicator - Marketing</div>
+  <div class="topbar-right">
+    <div class="status-badge">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-label" id="statusLabel">กำลังโหลด...</span>
+    </div>
+    <button class="refresh-btn" onclick="fetchData()">↻ รีเฟรช</button>
   </div>
 </div>
 
-<div class="person-tabs" id="personTabs"></div>
+<div class="person-tabs-wrap" id="personTabs"></div>
 
 <div class="main">
   <div id="mainSection"></div>
-  <div id="summaryBar" class="summary-bar"></div>
-  <div id="brandGridWrap"><div class="section-head">ภาพรวมรายแบรนด์</div>
-  <div class="brand-grid" id="brandGrid"></div></div>
+  <div id="summaryBar"></div>
+  <div id="brandGridWrap">
+    <div class="section-label">ภาพรวมรายแบรนด์</div>
+    <div class="brand-grid" id="brandGrid"></div>
+  </div>
   <div id="tableWrap">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-    <div class="section-head" style="margin:0">รายการงานทั้งหมด</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <div id="monthFilterRow" style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="f-btn active" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>
-      </div>
-      <div style="width:1px;height:20px;background:#e2e8f0"></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <div class="filters-wrap">
+      <div class="section-label" style="margin:0;flex:none">รายการงานทั้งหมด</div>
+      <div class="filter-group">
+        <div id="monthFilterRow" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="f-btn active" onclick="filterMonth(this,'ALL')">ทุกเดือน</button>
+        </div>
+        <div class="filter-sep"></div>
         <button class="f-btn-brand active" onclick="filterBrand(this,'ALL')">ทุกแบรนด์</button>
         <button class="f-btn-brand" onclick="filterBrand(this,'AUKEY')">AUKEY</button>
         <button class="f-btn-brand" onclick="filterBrand(this,'EARFUN')">EARFUN</button>
         <button class="f-btn-brand" onclick="filterBrand(this,'MOKIN')">MOKIN</button>
+        <div class="filter-sep"></div>
+        <div class="filter-group" id="filterRow"></div>
       </div>
-      <div style="width:1px;height:20px;background:#e2e8f0"></div>
-      <div class="filter-row" id="filterRow"></div>
     </div>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr>
-        <th>#</th><th>แบรนด์</th><th>Platform</th><th>Job Responsibilities</th>
-        <th style="text-align:center">จำนวนงาน</th><th>Deadline</th><th>Actual Completion</th><th>Link</th><th>Status</th>
-      </tr></thead>
-      <tbody id="jobBody"></tbody>
-    </table>
-  </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>แบรนด์</th><th>Platform</th><th>Job Responsibilities</th>
+          <th style="text-align:center">จำนวนงาน</th><th>Deadline</th><th>Actual Completion</th><th>Link</th><th>Status</th>
+        </tr></thead>
+        <tbody id="jobBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div style="font-size:14px;color:#555">กำลังดึงข้อมูลจาก Google Sheet...</div>
+  <div class="loading-text">กำลังดึงข้อมูลจาก Google Sheets...</div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -523,19 +648,45 @@ function renderSummary() {
   const pct = totalTarget > 0 ? Math.round(totalActual/totalTarget*100) : 0;
   const monthLabel = currentMonth === 'ALL' ? 'ทุกเดือน' : currentMonth;
 
+  const barColor = pct >= 100 ? 'var(--success)' : pct >= 70 ? 'var(--blue)' : 'var(--warning)';
   document.getElementById('summaryBar').innerHTML = `
-    <div><div style="font-size:11px;color:#888;margin-bottom:2px">ชื่อ <span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-weight:600">● LIVE</span></div>
-    <div style="font-size:17px;font-weight:700">${name}</div></div>
-    <div style="width:1px;height:50px;background:#e9eef5"></div>
-    <div><div class="metric-label">เดือน</div><div style="font-size:16px;font-weight:700;color:#185FA5">${monthLabel}</div></div>
-    <div style="width:1px;height:50px;background:#e9eef5"></div>
-    <div><div class="metric-label">Actual รวม</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
-    <div><div class="metric-label">เป้าหมายรวม</div><div style="font-size:28px;font-weight:700;color:#444">${totalTarget}</div></div>
-    <div><div class="metric-label">เสร็จแล้ว</div><div style="font-size:28px;font-weight:700;color:#059669">${done}</div></div>
-    <div><div class="metric-label">ยังไม่เสร็จ</div><div style="font-size:28px;font-weight:700;color:#d97706">${jobs.length-done}</div></div>
-    <div style="flex:1;min-width:140px">
-      <div class="metric-label" style="margin-bottom:6px">Overall Progress — ${pct}%</div>
-      <div class="overall-bar-bg"><div class="overall-bar" style="width:${Math.min(pct,100)}%"></div></div>
+    <div class="person-hero">
+      <div class="person-hero-name">
+        <div class="person-hero-role"><span class="live-dot"></span> LIVE</div>
+        <div class="person-hero-title">${name}</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">เดือน</div>
+        <div style="font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-.3px">${monthLabel}</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Actual รวม</div>
+        <div class="hero-stat-value blue">${totalActual}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">เป้าหมายรวม</div>
+        <div class="hero-stat-value dark">${totalTarget}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">เสร็จแล้ว</div>
+        <div class="hero-stat-value green">${done}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">ยังไม่เสร็จ</div>
+        <div class="hero-stat-value orange">${jobs.length - done}</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-progress">
+        <div class="hero-progress-label">
+          <span class="hero-progress-text">Overall Progress</span>
+          <span class="hero-progress-pct" style="color:${barColor}">${pct}%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>=100?'var(--success)':pct>=70?'linear-gradient(90deg,var(--blue),var(--teal))':'var(--warning)'}"></div>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -642,17 +793,17 @@ function renderTeamOverview() {
     const done = jobs.filter(j => isDone(j.status)).length;
     const notDone = jobs.length - done;
     const pct = target > 0 ? Math.round(actual/target*100) : 0;
-    const barColor = pct >= 100 ? '#059669' : pct >= 70 ? '#185FA5' : '#d97706';
+    const barColor = pct >= 100 ? 'var(--success)' : pct >= 70 ? 'var(--blue)' : 'var(--warning)';
     return `<tr>
-      <td style="font-weight:600;font-size:14px">${name}</td>
-      <td style="text-align:center;font-size:18px;font-weight:700;color:#185FA5">${actual}</td>
-      <td style="text-align:center;font-size:18px;font-weight:700;color:#444">${target}</td>
-      <td style="text-align:center;font-size:18px;font-weight:700;color:#059669">${done}</td>
-      <td style="text-align:center;font-size:18px;font-weight:700;color:#d97706">${notDone}</td>
-      <td style="min-width:160px">
+      <td style="font-weight:600;font-size:13px;color:var(--text)">${name}</td>
+      <td style="text-align:center;font-size:17px;font-weight:800;color:var(--blue)">${actual}</td>
+      <td style="text-align:center;font-size:17px;font-weight:700;color:var(--text2)">${target}</td>
+      <td style="text-align:center;font-size:17px;font-weight:700;color:var(--success)">${done}</td>
+      <td style="text-align:center;font-size:17px;font-weight:700;color:var(--warning)">${notDone}</td>
+      <td style="min-width:180px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden">
-            <div style="width:${Math.min(pct,100)}%;height:100%;background:${barColor};border-radius:4px"></div>
+          <div style="flex:1;height:6px;background:var(--slate-pale);border-radius:3px;overflow:hidden">
+            <div style="width:${Math.min(pct,100)}%;height:100%;background:${barColor};border-radius:3px;transition:width .5s"></div>
           </div>
           <span style="font-size:12px;font-weight:700;color:${barColor};min-width:36px">${pct}%</span>
         </div>
@@ -671,21 +822,38 @@ function renderTeamOverview() {
   const notLoaded = people.length - loadedPeople.length;
 
   document.getElementById('mainSection').innerHTML = `
-    <div class="summary-bar" style="margin-bottom:16px">
-      <div><div class="metric-label">เดือน</div><div style="font-size:16px;font-weight:700;color:#185FA5">${currentMonth==='ALL'?'ทุกเดือน':currentMonth}</div></div>
-      <div style="width:1px;height:50px;background:#e9eef5"></div>
-      <div><div class="metric-label">Actual รวม (${loadedPeople.length} คน)</div><div style="font-size:28px;font-weight:700;color:#185FA5">${totalActual}</div></div>
-      <div><div class="metric-label">เสร็จแล้ว</div><div style="font-size:28px;font-weight:700;color:#059669">${totalDone}</div></div>
-      <div><div class="metric-label">ยังไม่เสร็จ</div><div style="font-size:28px;font-weight:700;color:#d97706">${totalNotDone}</div></div>
-      ${notLoaded > 0 ? `<div style="font-size:11px;color:#aaa;align-self:center">⚠️ ยังไม่โหลด ${notLoaded} คน<br>กดแท็บชื่อเพื่อโหลด</div>` : ''}
+    <div class="person-hero" style="margin-bottom:16px">
+      <div class="person-hero-name">
+        <div class="person-hero-role">Team Overview</div>
+        <div class="person-hero-title">MBC Marketing Team</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">เดือน</div>
+        <div style="font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-.3px">${currentMonth==='ALL'?'ทุกเดือน':currentMonth}</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Actual รวม</div>
+        <div class="hero-stat-value blue">${totalActual}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">เสร็จแล้ว</div>
+        <div class="hero-stat-value green">${totalDone}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">ยังไม่เสร็จ</div>
+        <div class="hero-stat-value orange">${totalNotDone}</div>
+      </div>
+      ${notLoaded > 0 ? `<div style="font-size:11px;color:var(--text3);background:var(--slate-pale);padding:8px 12px;border-radius:8px;align-self:center">⚠️ ยังไม่โหลด ${notLoaded} คน<br><span style="color:var(--text3)">กดแท็บชื่อเพื่อโหลด</span></div>` : ''}
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <div class="section-head" style="margin:0">เลือกเดือน:</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="section-label" style="margin:0;flex:none;border:none">เลือกเดือน</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${monthBtns.join('')}</div>
     </div>
-    <div class="section-head">ผลรวมรายคน</div>
-    <div class="table-wrap" style="margin-top:12px">
-      <table>
+    <div class="section-label">ผลรวมรายคน</div>
+    <div class="team-table-wrap">
+      <table class="team-table">
         <thead><tr>
           <th>ชื่อ</th>
           <th style="text-align:center">Actual</th>
