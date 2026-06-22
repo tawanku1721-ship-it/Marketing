@@ -337,7 +337,7 @@ async function fetchPersonData(personIndex) {
           const numJob = Number(row[c.numCol] || 0);
           const link = String(row[c.linkCol] || '').trim();
           const status = String(row[c.statusCol] || '').trim();
-          if (!rawPlat && !job) continue;
+          if (!rawPlat && !job && !link) continue;
           rawJobs.push({ brand, rawPlat, job, dlVal, actVal, numJob, link, status });
         }
 
@@ -367,10 +367,13 @@ async function fetchPersonData(personIndex) {
               status: r.status,
             };
             grouped.push(current);
-          } else if (r.rawPlat && current) {
-            parsePlatforms(r.rawPlat).forEach(p => {
-              if (!current.platforms.includes(p)) current.platforms.push(p);
-            });
+          } else if (current) {
+            // platform-only or link-only row — attach to current group
+            if (r.rawPlat) {
+              parsePlatforms(r.rawPlat).forEach(p => {
+                if (!current.platforms.includes(p)) current.platforms.push(p);
+              });
+            }
             if (r.link && !current.links.includes(r.link)) current.links.push(r.link);
             if (statusPriority(r.status) > statusPriority(current.status)) current.status = r.status;
             if (!current.numJob && r.numJob) current.numJob = r.numJob;
